@@ -1,0 +1,69 @@
+{% extends 'rh/base.html' %}
+
+{% block titulo %}Painel · Paiva Express{% endblock %}
+
+{% block conteudo %}
+<div class="mb-5">
+    <h1 class="mb-1" style="font-size: 1.75rem;">Bem-vindo, {{ user.first_name|default:user.username }}.</h1>
+    <p class="text-muted mb-0">Escolha um módulo para começar.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <a href="{% url 'lista_funcionarios' %}" class="text-decoration-none text-reset">
+            <div class="card h-100 module-card">
+                <div class="card-body p-4">
+                    <div class="module-icon module-icon--primary">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <h3 class="mt-4 mb-1">Recursos Humanos</h3>
+                    <p class="text-muted mb-3">Gestão de funcionários, admissões e dossiê de documentos.</p>
+                    <span class="module-link">Acessar módulo <i class="bi bi-arrow-right"></i></span>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-6">
+        <a href="{% url 'lista_entregadores' %}" class="text-decoration-none text-reset">
+            <div class="card h-100 module-card">
+                <div class="card-body p-4">
+                    <div class="module-icon module-icon--accent">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                    <h3 class="mt-4 mb-1">Logística</h3>
+                    <p class="text-muted mb-3">Cadastro e controle da frota de entregadores e veículos.</p>
+                    <span class="module-link">Acessar módulo <i class="bi bi-arrow-right"></i></span>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<style>
+    .module-card {
+        transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+        cursor: pointer;
+    }
+    .module-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+        border-color: #cbd5e1;
+    }
+    .module-icon {
+        width: 56px; height: 56px;
+        border-radius: 14px;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 1.7rem;
+        color: #fff;
+    }
+    .module-icon--primary { background: linear-gradient(135deg, #0f172a, #334155); }
+    .module-icon--accent  { background: linear-gradient(135deg, #f97316, #ea580c); }
+    .module-link {
+        display: inline-flex; align-items: center; gap: 6px;
+        font-weight: 600; color: var(--primary); font-size: .92rem;
+    }
+    .module-card:hover .module-link { color: var(--accent); }
+    .module-card:hover .module-link i { transform: translateX(3px); transition: transform .15s; }
+</style>
+{% endblock %}

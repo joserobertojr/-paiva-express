@@ -1,0 +1,27 @@
+{% extends 'rh/base.html' %}
+
+{% block conteudo %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-warning text-dark">
+        <h4 class="mb-0">✏️ Editar: {{ funcionario.nome }}</h4>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row">
+                <!-- Mostra o formulário dividindo as colunas usando Bootstrap -->
+                {% for field in form %}
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-bold">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                {% endfor %}
+            </div>
+            <hr>
+            
+            <button type="submit" class="btn btn-warning">💾 Salvar Alterações</button>
+            <a href="{% url 'ver_funcionario' funcionario.id %}" class="btn btn-secondary ms-2">Cancelar</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

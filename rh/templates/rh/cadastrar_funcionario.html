@@ -1,0 +1,56 @@
+{% extends 'rh/base.html' %}
+
+{% block conteudo %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Cadastrar Novo Funcionário</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <form method="post">
+    {% csrf_token %}
+    <div class="row">
+        <!-- O Django permite acessar cada campo individualmente -->
+        <div class="col-md-4 mb-3"><label class="fw-bold">Registro Interno</label>{{ form.registro_interno }}</div>
+        <div class="col-md-8 mb-3"><label class="fw-bold">Nome Completo</label>{{ form.nome }}</div>
+        
+        <div class="col-md-4 mb-3"><label class="fw-bold">Cargo</label>{{ form.cargo }}</div>
+        <div class="col-md-4 mb-3"><label class="fw-bold">Data Admissão</label>{{ form.data_admissao }}</div>
+        <div class="col-md-4 mb-3"><label class="fw-bold">CPF</label>{{ form.cpf }}</div>
+
+        <div class="col-md-4 mb-3"><label class="fw-bold">RG</label>{{ form.rg }}</div>
+        <div class="col-md-4 mb-3"><label class="fw-bold">Telefone</label>{{ form.telefone }}</div>
+        <div class="col-md-4 mb-3"><label class="fw-bold">E-mail</label>{{ form.email }}</div>
+
+        <h6 class="text-primary mt-3">Endereço (Digite o CEP para buscar)</h6>
+        <hr>
+        <div class="col-md-3 mb-3"><label class="fw-bold">CEP</label>{{ form.cep }}</div>
+        <div class="col-md-7 mb-3"><label class="fw-bold">Logradouro (Rua/Av)</label>{{ form.endereco }}</div>
+        <div class="col-md-2 mb-3"><label class="fw-bold">Nº</label>{{ form.numero }}</div>
+        
+        <div class="col-md-5 mb-3"><label class="fw-bold">Bairro</label>{{ form.bairro }}</div>
+        <div class="col-md-5 mb-3"><label class="fw-bold">Cidade</label>{{ form.cidade }}</div>
+        <div class="col-md-2 mb-3"><label class="fw-bold">UF</label>{{ form.estado }}</div>
+
+        <h6 class="text-primary mt-3">Dados Bancários</h6>
+        <hr>
+        <div class="col-md-4 mb-3"><label class="fw-bold">Banco</label>{{ form.banco }}</div>
+        <div class="col-md-4 mb-3"><label class="fw-bold">Agência</label>{{ form.agencia }}</div>
+        <div class="col-md-4 mb-3"><label class="fw-bold">Conta</label>{{ form.conta }}</div>
+    </div>
+    
+    <button type="submit" class="btn btn-success btn-lg w-100 mt-3">Salvar Funcionário</button>
+</form>
+                    
+                    <button type="submit" class="btn btn-success mt-3">Salvar Funcionário</button>
+                    <a href="{% url 'lista_funcionarios' %}" class="btn btn-secondary mt-3 ms-2">Cancelar</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

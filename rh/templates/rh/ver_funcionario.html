@@ -1,0 +1,120 @@
+{% extends 'rh/base.html' %}
+
+{% block conteudo %}
+<div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+    <h4 class="mb-0">Dossiê: {{ funcionario.nome }}</h4>
+    <div class="d-flex gap-2">
+        <!-- Grupo de botões no lado direito -->
+        <a href="{% url 'lista_funcionarios' %}" class="btn btn-secondary btn-sm">⬅ Voltar</a>
+        <a href="{% url 'editar_funcionario' funcionario.id %}" class="btn btn-warning btn-sm">✏️ Editar</a>
+        <a href="{% url 'excluir_funcionario' funcionario.id %}" class="btn btn-danger btn-sm">🗑️ Excluir</a>
+    </div>
+</div>
+        
+        <!-- SESSÃO 1: DADOS PROFISSIONAIS E PESSOAIS -->
+        <h5 class="text-primary border-bottom pb-2 mb-3 mt-2">Dados Profissionais e Pessoais</h5>
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">Registro Interno</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.registro_interno }}" readonly>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">Nome Completo</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.nome }}" readonly>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">Cargo</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.cargo }}" readonly>
+            </div>
+            <div class="col-md-3 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">Data de Admissão</label>
+                <!-- Usamos o filtro date para formatar a data para o padrão brasileiro -->
+                <input type="text" class="form-control bg-light" value="{{ funcionario.data_admissao|date:'d/m/Y' }}" readonly>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">CPF</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.cpf }}" readonly>
+            </div>
+            <div class="col-md-5 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">RG</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.rg }}" readonly>
+            </div>
+        </div>
+
+        <!-- SESSÃO 2: CONTATO -->
+        <h5 class="text-primary border-bottom pb-2 mt-4 mb-3">Contato</h5>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">Telefone</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.telefone }}" readonly>
+            </div>
+            <div class="col-md-8 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">E-mail</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.email }}" readonly>
+            </div>
+        </div>
+
+        <!-- SESSÃO 3: ENDEREÇO -->
+        <h5 class="text-primary border-bottom pb-2 mt-4 mb-3">Endereço</h5>
+        <div class="row">
+            <div class="col-md-3 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">CEP</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.cep }}" readonly>
+            </div>
+            <div class="col-md-7 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">Endereço Completo</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.endereco }}" readonly>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">Número</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.numero }}" readonly>
+            </div>
+            <div class="col-md-5 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">Bairro</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.bairro }}" readonly>
+            </div>
+            <div class="col-md-5 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">Cidade</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.cidade }}" readonly>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">Estado (UF)</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.estado }}" readonly>
+            </div>
+        </div>
+
+        <!-- SESSÃO 4: DADOS BANCÁRIOS -->
+        <h5 class="text-primary border-bottom pb-2 mt-4 mb-3">Dados Bancários</h5>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">Banco</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.banco }}" readonly>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">Agência</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.agencia }}" readonly>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label text-muted small fw-bold mb-0">Conta com Dígito</label>
+                <input type="text" class="form-control bg-light" value="{{ funcionario.conta }}" readonly>
+            </div>
+        </div>
+
+        <!-- SESSÃO 5: DOCUMENTOS -->
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mt-4 mb-3">
+                <h5 class="text-primary mb-0">Documentos Anexados</h5>
+        <!-- BOTÃO NOVO AQUI -->
+            <a href="{% url 'anexar_documento' funcionario.id %}" class="btn btn-sm btn-success">+ Anexar Novo</a>
+            </div>
+
+<ul class="list-group mb-4">
+    {% for doc in documentos %}
+    <li class="list-group-item d-flex justify-content-between align-items-center bg-light">
+        <span>📄 {{ doc.titulo }} <small class="text-muted">({{ doc.data_upload|date:"d/m/Y" }})</small></span>
+        <a href="{{ doc.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-primary">Visualizar / Baixar</a>
+    </li>
+    {% empty %}
+    <li class="list-group-item text-muted bg-light text-center py-3">Nenhum documento anexado a este funcionário.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

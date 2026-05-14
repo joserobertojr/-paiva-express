@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block titulo %}Paiva Express{% endblock %}</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #0f172a;
+            --primary-soft: #1e293b;
+            --accent: #f97316;
+            --accent-hover: #ea580c;
+            --bg: #f6f8fb;
+            --card: #ffffff;
+            --border: #e5e9f0;
+            --text: #0f172a;
+            --muted: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --info: #0ea5e9;
+            --shadow-sm: 0 1px 2px rgba(15, 23, 42, .04), 0 1px 3px rgba(15, 23, 42, .06);
+            --shadow-md: 0 4px 12px rgba(15, 23, 42, .06), 0 2px 4px rgba(15, 23, 42, .04);
+            --radius: 12px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 15px;
+            line-height: 1.55;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1, h2, h3, h4, h5, h6 { font-weight: 700; letter-spacing: -0.01em; }
+
+        /* ===== Navbar ===== */
+        .topbar {
+            background: var(--primary);
+            color: #fff;
+            padding: 14px 0;
+            box-shadow: var(--shadow-sm);
+        }
+        .topbar .container { display: flex; align-items: center; justify-content: space-between; }
+        .topbar .brand {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .topbar .brand .logo {
+            width: 34px; height: 34px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 1.05rem;
+        }
+        .topbar .user-area { display: flex; align-items: center; gap: 14px; }
+        .topbar .user-name { color: rgba(255,255,255,.75); font-size: .9rem; }
+        .btn-logout {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,.25);
+            color: #fff;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: .85rem;
+            font-weight: 500;
+            transition: all .15s;
+        }
+        .btn-logout:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.4); }
+
+        /* ===== Main / Footer ===== */
+        main { flex: 1; padding: 36px 0 64px; }
+        footer {
+            border-top: 1px solid var(--border);
+            background: #fff;
+            padding: 18px 0;
+            font-size: .85rem;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        /* ===== Cards ===== */
+        .card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+            background: var(--card);
+        }
+        .card-clean { border-radius: var(--radius); overflow: hidden; }
+
+        /* ===== Botões ===== */
+        .btn { border-radius: 8px; font-weight: 500; padding: 8px 16px; transition: all .15s; }
+        .btn-primary { background: var(--primary); border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-soft); border-color: var(--primary-soft); }
+        .btn-accent { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .btn-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: #fff; }
+        .btn-soft {
+            background: #f1f5f9; border: 1px solid var(--border); color: var(--text);
+        }
+        .btn-soft:hover { background: #e2e8f0; color: var(--text); }
+
+        /* ===== Inputs / forms ===== */
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 9px 12px;
+            font-size: .92rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15, 23, 42, .08);
+        }
+        label { font-weight: 500; font-size: .88rem; color: var(--text); }
+
+        /* ===== Tabelas ===== */
+        .table { margin-bottom: 0; }
+        .table thead th {
+            background: #f8fafc;
+            color: var(--muted);
+            font-weight: 600;
+            font-size: .78rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            border-bottom: 1px solid var(--border);
+            padding: 14px 16px;
+        }
+        .table tbody td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        .table tbody tr:last-child td { border-bottom: 0; }
+        .table tbody tr:hover { background: #fafbfc; }
+
+        /* ===== Badges ===== */
+        .badge-status {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 10px; border-radius: 999px; font-size: .75rem; font-weight: 600;
+        }
+        .badge-status.ativo { background: rgba(16, 185, 129, .12); color: #047857; }
+        .badge-status.inativo { background: rgba(239, 68, 68, .12); color: #b91c1c; }
+        .badge-status .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+        /* ===== Page header utilities ===== */
+        .page-header {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 16px; flex-wrap: wrap; margin-bottom: 24px;
+        }
+        .page-title { display: flex; align-items: center; gap: 12px; margin: 0; }
+        .page-title i { color: var(--accent); }
+        .page-subtitle { color: var(--muted); margin: 2px 0 0; font-size: .9rem; font-weight: 400; }
+
+        .breadcrumb-back {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: var(--muted); text-decoration: none; font-size: .88rem; margin-bottom: 16px;
+        }
+        .breadcrumb-back:hover { color: var(--primary); }
+
+        /* ===== Search bar ===== */
+        .search-form { display: flex; gap: 8px; }
+        .search-form .form-control { min-width: 240px; }
+    </style>
+</head>
+<body>
+
+    {% if user.is_authenticated %}
+    <header class="topbar">
+        <div class="container">
+            <a class="brand" href="{% url 'hub' %}">
+                <span class="logo"><i class="bi bi-truck"></i></span>
+                Paiva Express
+            </a>
+            <div class="user-area">
+                <span class="user-name d-none d-md-inline">Olá, {{ user.username }}</span>
+                <form action="{% url 'logout' %}" method="post" class="m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-logout">
+                        <i class="bi bi-box-arrow-right"></i> Sair
+                    </button>
+                </form>
+            </div>
+        </div>
+    </header>
+    {% endif %}
+
+    <main>
+        <div class="container">
+            {% block conteudo %}{% endblock %}
+        </div>
+    </main>
+
+    {% if user.is_authenticated %}
+    <footer>
+        <div class="container">
+            &copy; {% now "Y" %} Paiva Express &middot; Sistema de gestão interna
+        </div>
+    </footer>
+    {% endif %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const campoCep = document.querySelector('#id_cep');
+
+            if (campoCep) {
+                campoCep.addEventListener('blur', function() {
+                    const cep = this.value.replace(/\D/g, '');
+
+                    if (cep.length === 8) {
+                        document.querySelector('#id_endereco').value = 'Buscando...';
+
+                        fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                            .then(response => response.json())
+                            .then(dados => {
+                                if (!dados.erro) {
+                                    document.querySelector('#id_endereco').value = dados.logradouro;
+                                    document.querySelector('#id_bairro').value = dados.bairro;
+                                    document.querySelector('#id_cidade').value = dados.localidade;
+                                    document.querySelector('#id_estado').value = dados.uf;
+                                    document.querySelector('input[name="numero"]').focus();
+                                } else {
+                                    alert('CEP não encontrado.');
+                                }
+                            })
+                            .catch(error => console.error('Erro ao buscar CEP:', error));
+                    }
+                });
+            }
+
+            const campoCpf = document.querySelector('#id_cpf');
+            if (campoCpf) {
+                campoCpf.addEventListener('input', function (e) {
+                    let valor = e.target.value.replace(/\D/g, '');
+                    if (valor.length > 11) valor = valor.slice(0, 11);
+                    valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
+                    valor = valor.replace(/(\d{3})(\d)/, '$1.$2');
+                    valor = valor.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                    e.target.value = valor;
+                });
+            }
+
+            const campoTelefone = document.querySelector('#id_telefone');
+            if (campoTelefone) {
+                campoTelefone.addEventListener('input', function (e) {
+                    let valor = e.target.value.replace(/\D/g, '');
+                    if (valor.length > 11) valor = valor.slice(0, 11);
+                    valor = valor.replace(/^(\d{2})(\d)/g, '($1) $2');
+                    valor = valor.replace(/(\d)(\d{4})$/, '$1-$2');
+                    e.target.value = valor;
+                });
+            }
+        });
+    </script>
+</body>
+</html>

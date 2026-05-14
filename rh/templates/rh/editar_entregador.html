@@ -1,0 +1,39 @@
+{% extends 'rh/base.html' %}
+
+{% block conteudo %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">Editar Entregador: {{ entregador.nome }}</h4>
+        <a href="{% url 'ver_entregador' entregador.id %}" class="btn btn-outline-dark btn-sm">⬅ Voltar</a>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <h5 class="text-warning border-bottom pb-2 mb-3 mt-2">Dados Pessoais</h5>
+            <div class="row">
+                <div class="col-md-8 mb-3"><label class="fw-bold">Nome Completo</label>{{ form.nome }}</div>
+                <div class="col-md-12 mb-3"><label class="fw-bold">Foto do Entregador</label>{{ form.foto }}</div>
+                <div class="col-md-4 mb-3"><label class="fw-bold">CPF</label>{{ form.cpf }}</div>
+                <div class="col-md-4 mb-3"><label class="fw-bold">Telefone</label>{{ form.telefone }}</div>
+                <div class="col-md-4 mb-3"><label class="fw-bold">Nº CNH</label>{{ form.cnh }}</div>
+                <div class="col-md-4 mb-3 mt-4">
+                    <div class="form-check form-switch mt-2">
+                        {{ form.ativo }}
+                        <label class="form-check-label fw-bold ms-2">Entregador Ativo?</label>
+                    </div>
+                </div>
+            </div>
+
+            <h5 class="text-warning border-bottom pb-2 mt-4 mb-3">Dados do Veículo</h5>
+            <div class="row">
+                <div class="col-md-8 mb-3"><label class="fw-bold">Veículo</label>{{ form.veiculo }}</div>
+                <div class="col-md-4 mb-3"><label class="fw-bold">Placa</label>{{ form.placa }}</div>
+            </div>
+
+            <hr>
+            <button type="submit" class="btn btn-warning btn-lg w-100 mt-2 fw-bold">Salvar Alterações</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
