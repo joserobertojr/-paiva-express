@@ -1,0 +1,151 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}SaleTur{% endblock %} — Agência de Viagens</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>" />
+</head>
+<body>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">
+        <div class="brand-icon">✈️</div>
+        <div>
+          <div class="brand-name">SaleTur</div>
+          <div class="brand-sub">Agência de Viagens</div>
+        </div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Principal</div>
+      <ul>
+        <li class="nav-item {% if request.resolver_match.namespace == 'core' and request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+          <a href="{% url 'core:dashboard' %}"><span class="nav-icon">🏠</span> Dashboard</a>
+        </li>
+      </ul>
+
+      <div class="nav-section-label">Operações</div>
+      <ul>
+        {% if user_perms.clientes %}
+        <li class="nav-item {% if 'clientes' in request.path %}active{% endif %}">
+          <a href="{% url 'clientes:lista' %}"><span class="nav-icon">👥</span> Clientes</a>
+        </li>
+        {% endif %}
+        {% if user_perms.reservas %}
+        <li class="nav-item {% if 'reservas' in request.path %}active{% endif %}">
+          <a href="{% url 'reservas:lista' %}"><span class="nav-icon">📋</span> Reservas</a>
+        </li>
+        {% endif %}
+        {% if user_perms.pagamentos %}
+        <li class="nav-item {% if 'pagamentos' in request.path and 'relatorios' not in request.path %}active{% endif %}">
+          <a href="{% url 'pagamentos:lista' %}"><span class="nav-icon">💳</span> Pagamentos</a>
+        </li>
+        {% endif %}
+      </ul>
+
+      {% if user_perms.vendedores or user_perms.pacotes or user_perms.relatorios or user_perms.configuracoes %}
+      <div class="nav-section-label">Administração</div>
+      <ul>
+        {% if user_perms.vendedores %}
+        <li class="nav-item {% if 'vendedores' in request.path %}active{% endif %}">
+          <a href="{% url 'vendedores:lista' %}"><span class="nav-icon">🧑‍💼</span> Vendedores</a>
+        </li>
+        {% endif %}
+        {% if user_perms.pacotes %}
+        <li class="nav-item {% if 'pacotes' in request.path %}active{% endif %}">
+          <a href="{% url 'pacotes:lista' %}"><span class="nav-icon">🗺️</span> Pacotes</a>
+        </li>
+        {% endif %}
+        {% if user_perms.relatorios %}
+        <li class="nav-item {% if 'relatorios' in request.path %}active{% endif %}">
+          <a href="{% url 'pagamentos:relatorios' %}"><span class="nav-icon">📊</span> Relatórios</a>
+        </li>
+        {% endif %}
+        {% if user_perms.configuracoes %}
+        <li class="nav-item {% if 'configuracoes' in request.path %}active{% endif %}">
+          <a href="{% url 'core:configuracoes' %}"><span class="nav-icon">⚙️</span> Configurações</a>
+        </li>
+        {% endif %}
+      </ul>
+      {% endif %}
+    </nav>
+
+    <div class="sidebar-footer">
+      {% if request.user.is_authenticated %}
+        {% if eh_admin %}
+          <span style="font-size:.7rem;background:var(--verde-light);color:var(--verde);padding:2px 7px;border-radius:10px;font-weight:600;">Admin</span>
+        {% else %}
+          <span style="font-size:.7rem;background:#FFF8E1;color:#F57C00;padding:2px 7px;border-radius:10px;font-weight:600;">Vendedor</span>
+        {% endif %}
+      {% endif %}
+      &nbsp;© 2025 SaleTur
+    </div>
+  </aside>
+
+  <div id="overlay" onclick="toggleSidebar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:150;"></div>
+
+  <header class="topbar">
+    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+    <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+    <div class="topbar-actions">
+      <div class="topbar-user-wrap" id="user-menu-wrap">
+        <div class="topbar-user" onclick="toggleUserMenu()" aria-haspopup="true">
+          <div class="topbar-avatar">{{ request.user.username|first|upper }}</div>
+          <span class="topbar-role-badge {% if eh_admin %}role-admin{% else %}role-vendedor{% endif %}">
+            {% if eh_admin %}Admin{% else %}Vendedor{% endif %}
+          </span>
+          <span style="font-size:.65rem;color:var(--cinza-3);">▾</span>
+        </div>
+        <div class="user-dropdown" id="user-dropdown">
+          <form method="post" action="{% url 'logout' %}" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" class="dropdown-sair-btn">🚪 Sair</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="alerts-container">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags|default:'success' }}">
+        {% if message.tags == 'success' %}✅{% elif message.tags == 'warning' %}⚠️{% else %}❌{% endif %}
+        {{ message }}
+        <button class="alert-close" onclick="this.parentElement.remove()">✕</button>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="main-wrapper">
+    <main class="main-content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <script>
+    function toggleSidebar() {
+      const s = document.getElementById('sidebar');
+      const o = document.getElementById('overlay');
+      s.classList.toggle('open');
+      o.style.display = s.classList.contains('open') ? 'block' : 'none';
+    }
+    function toggleUserMenu() {
+      document.getElementById('user-dropdown').classList.toggle('open');
+    }
+    document.addEventListener('click', function(e) {
+      const wrap = document.getElementById('user-menu-wrap');
+      const dd   = document.getElementById('user-dropdown');
+      if (dd && wrap && !wrap.contains(e.target)) dd.classList.remove('open');
+    });
+    document.querySelectorAll('.alert').forEach(el => {
+      setTimeout(() => { el.style.transition='opacity .4s'; el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, 4000);
+    });
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

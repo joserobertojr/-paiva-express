@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Editar Acesso — {{ vendedor.nome }}{% endblock %}
+{% block page_title %}Configurações{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>✏️ Editar Acesso</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a>
+      <span class="breadcrumb-sep">/</span>
+      <a href="{% url 'core:configuracoes' %}">Configurações</a>
+      <span class="breadcrumb-sep">/</span> Editar
+    </div>
+  </div>
+</div>
+
+<div style="max-width:520px;">
+  <div class="form-card">
+    <div class="form-header">
+      <div class="form-header-icon">🧑‍💼</div>
+      <div>
+        <div class="form-title">{{ vendedor.nome }}</div>
+        <div style="font-size:.82rem;color:var(--cinza-3);">Usuário: <strong>{{ vendedor.user.username }}</strong></div>
+      </div>
+    </div>
+
+    <form method="post" style="padding:20px;">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Nova senha <small style="color:var(--cinza-3);">(deixe em branco para manter)</small></label>
+        <input type="password" name="nova_senha" class="form-control"
+               placeholder="Mínimo 8 caracteres" autocomplete="new-password" minlength="8" />
+      </div>
+      <div class="form-group">
+        <label>Nível de acesso</label>
+        <select name="role" class="form-control">
+          <option value="vendedor" {% if perfil.role == 'vendedor' %}selected{% endif %}>Vendedor — acesso restrito</option>
+          <option value="admin" {% if perfil.role == 'admin' %}selected{% endif %}>Administrador — acesso total</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:20px;">
+        <button type="submit" class="btn btn-verde">💾 Salvar Alterações</button>
+        <a href="{% url 'core:configuracoes' %}" class="btn btn-outline">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

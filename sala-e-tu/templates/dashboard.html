@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>🏖️ Bem-vindo à SaleTur</h1>
+    <div class="breadcrumb">Visão geral do sistema</div>
+  </div>
+  <a href="{% url 'reservas:criar' %}" class="btn btn-laranja">✈️ Nova Reserva</a>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card verde">
+    <div class="stat-icon">👥</div>
+    <div class="stat-info">
+      <div class="stat-label">Total de Clientes</div>
+      <div class="stat-value">{{ total_clientes }}</div>
+      <div class="stat-sub">clientes ativos cadastrados</div>
+    </div>
+  </div>
+  <div class="stat-card laranja">
+    <div class="stat-icon">🗺️</div>
+    <div class="stat-info">
+      <div class="stat-label">Pacotes Ativos</div>
+      <div class="stat-value">{{ total_pacotes }}</div>
+      <div class="stat-sub">pacotes disponíveis</div>
+    </div>
+  </div>
+  <div class="stat-card verde-mid">
+    <div class="stat-icon">📋</div>
+    <div class="stat-info">
+      <div class="stat-label">Reservas no Mês</div>
+      <div class="stat-value">{{ reservas_mes }}</div>
+      <div class="stat-sub">reservas do mês atual</div>
+    </div>
+  </div>
+  <div class="stat-card laranja-mid">
+    <div class="stat-icon">💰</div>
+    <div class="stat-info">
+      <div class="stat-label">Receita do Mês</div>
+      <div class="stat-value">R$ {{ receita_mes|floatformat:0 }}</div>
+      <div class="stat-sub">em pagamentos recebidos</div>
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-grid">
+  <!-- RESERVAS RECENTES -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="dot"></span> Reservas Recentes</div>
+      <a href="{% url 'reservas:lista' %}" class="btn btn-outline btn-sm">Ver todas</a>
+    </div>
+    <div class="panel-body">
+      {% if reservas_recentes %}
+      <div class="table-responsive">
+        <table class="saleetur-table">
+          <thead>
+            <tr><th>#</th><th>Passageiro Principal</th><th>Destino</th><th>Valor</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for r in reservas_recentes %}
+            <tr>
+              <td><strong>#{{ r.pk }}</strong></td>
+              <td>
+                {% with r.passageiro_principal as pp %}
+                  {% if pp %}{{ pp.cliente.nome }}{% else %}—{% endif %}
+                {% endwith %}
+                {% if r.num_passageiros > 1 %}
+                  <span style="font-size:.75rem;background:var(--laranja-light);color:var(--laranja);padding:1px 6px;border-radius:10px;margin-left:4px;">+{{ r.num_passageiros|add:"-1" }}</span>
+                {% endif %}
+              </td>
+              <td>{{ r.pacote.destino }}</td>
+              <td>R$ {{ r.valor_total|floatformat:2 }}</td>
+              <td><span class="badge badge-{{ r.status }}">{{ r.get_status_display }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <p>Nenhuma reserva ainda.<br/>
+          <a href="{% url 'reservas:criar' %}" class="btn btn-verde" style="margin-top:14px;display:inline-flex;">Criar primeira reserva</a></p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- PRÓXIMAS SAÍDAS -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title"><span class="dot"></span> Próximas Saídas</div>
+      <a href="{% url 'pacotes:lista' %}" class="btn btn-outline btn-sm">Ver todos</a>
+    </div>
+    <div class="panel-body">
+      {% if proximos_pacotes %}
+        {% for p in proximos_pacotes %}
+        <div class="pacote-item">
+          <div class="pacote-thumb">🌍</div>
+          <div class="pacote-info">
+            <div class="pacote-nome">{{ p.titulo }}</div>
+            <div class="pacote-destino">{{ p.destino }} · {{ p.vagas_disponiveis }} vagas</div>
+          </div>
+          <div class="pacote-data">{{ p.data_saida|date:"d/m" }}</div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">🗺️</div>
+          <p>Nenhum pacote cadastrado.<br/>
+          <a href="{% url 'pacotes:criar' %}" class="btn btn-verde" style="margin-top:14px;display:inline-flex;">Criar pacote</a></p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-header"><div class="panel-title"><span class="dot"></span> Ações Rápidas</div></div>
+  <div class="panel-body" style="padding:20px;display:flex;gap:12px;flex-wrap:wrap;">
+    <a href="{% url 'vendedores:cadastrar' %}" class="btn btn-outline">🧑‍💼 Cadastrar Vendedor</a>
+    <a href="{% url 'clientes:cadastrar' %}"   class="btn btn-verde">👤 Novo Cliente</a>
+    <a href="{% url 'pacotes:criar' %}"         class="btn btn-verde">🗺️ Novo Pacote</a>
+    <a href="{% url 'reservas:criar' %}"        class="btn btn-laranja">✈️ Nova Reserva</a>
+    <a href="{% url 'pagamentos:lista' %}"      class="btn btn-outline">💳 Ver Pagamentos</a>
+  </div>
+</div>
+{% endblock %}

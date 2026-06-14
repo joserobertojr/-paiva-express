@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — SaleTur</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+</head>
+<body>
+<div class="login-page">
+  <div class="login-left">
+    <div class="login-logo-wrap">✈️</div>
+    <div class="login-title">SaleTur</div>
+    <div class="login-sub">Sistema de Gestão de Viagens</div>
+    <div style="margin-top:40px;opacity:.7;font-size:.9rem;text-align:center;max-width:300px;line-height:1.8;">
+      Gerencie clientes, pacotes, reservas e pagamentos<br/>em um só lugar.
+    </div>
+  </div>
+  <div class="login-right">
+    <div class="login-form-wrap">
+      <div class="login-form-title">Acesse o sistema</div>
+      <div class="login-form-sub">Entre com suas credenciais para continuar</div>
+      {% if form.errors %}
+        <div class="alert alert-error" style="margin-bottom:16px;">
+          ❌ Usuário ou senha incorretos.
+        </div>
+      {% endif %}
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label>Usuário</label>
+          <input type="text" name="username" placeholder="seu.usuario" autofocus required />
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" name="password" placeholder="••••••••" required />
+        </div>
+        <input type="hidden" name="next" value="{{ next }}" />
+        <button type="submit" class="btn-login">Entrar →</button>
+      </form>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Reservas{% endblock %}
+{% block page_title %}Reservas{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>✈️ Reservas</h1>
+    <div class="breadcrumb"><a href="{% url 'core:dashboard' %}">Dashboard</a> <span class="breadcrumb-sep">/</span> Reservas</div>
+  </div>
+</div>
+
+<p style="color:var(--cinza-3);margin-bottom:20px;font-size:.92rem;">Selecione um pacote para gerenciar passageiros e pagamentos.</p>
+
+{% if pacotes %}
+<div class="pacote-sel-grid">
+  {% for pacote in pacotes %}
+  {% with reservas=pacote.reservas.all %}
+  {% with total_pax=reservas|length %}
+  <a href="{% url 'reservas:gestao_pacote' pacote.pk %}" class="pacote-sel-card">
+    <div class="pacote-sel-icone">🗺️</div>
+    <div class="pacote-sel-body">
+      <div class="pacote-sel-titulo">{{ pacote.titulo }}</div>
+      <div class="pacote-sel-datas">
+        {{ pacote.data_saida|date:"d/m/Y" }} a {{ pacote.data_retorno|date:"d/m/Y" }}
+      </div>
+      <div class="pacote-sel-destino">📍 {{ pacote.destino }}</div>
+    </div>
+    <div class="pacote-sel-stats">
+      <div class="pacote-sel-stat">
+        <span class="stat-num">{{ reservas|length }}</span>
+        <span class="stat-txt">reserva{{ reservas|length|pluralize }}</span>
+      </div>
+      <div class="pacote-sel-seta">→</div>
+    </div>
+  </a>
+  {% endwith %}
+  {% endwith %}
+  {% endfor %}
+</div>
+{% else %}
+<div class="panel"><div class="panel-body">
+  <div class="empty-state">
+    <div class="empty-icon">✈️</div>
+    <p>Nenhuma reserva ativa no momento.<br/>
+    <a href="{% url 'reservas:criar' %}" class="btn btn-laranja" style="margin-top:14px;display:inline-flex;">Criar primeira reserva</a></p>
+  </div>
+</div></div>
+{% endif %}
+{% endblock %}

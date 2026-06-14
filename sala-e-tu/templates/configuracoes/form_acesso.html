@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Criar Acesso — {{ vendedor.nome }}{% endblock %}
+{% block page_title %}Configurações{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>🔐 Criar Acesso</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a>
+      <span class="breadcrumb-sep">/</span>
+      <a href="{% url 'core:configuracoes' %}">Configurações</a>
+      <span class="breadcrumb-sep">/</span> Novo Acesso
+    </div>
+  </div>
+</div>
+
+<div style="max-width:520px;">
+  <div class="form-card">
+    <div class="form-header">
+      <div class="form-header-icon">🧑‍💼</div>
+      <div>
+        <div class="form-title">{{ vendedor.nome }}</div>
+        <div style="font-size:.82rem;color:var(--cinza-3);">Criar login e senha de acesso ao sistema</div>
+      </div>
+    </div>
+
+    <form method="post" style="padding:20px;">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Nome de usuário</label>
+        <input type="text" name="username" class="form-control" required
+               placeholder="ex: joao.silva" autocomplete="username" />
+        <small style="color:var(--cinza-3);">Somente letras, números, . e _</small>
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" name="senha" class="form-control" required
+               placeholder="Mínimo 8 caracteres" autocomplete="new-password" minlength="8" />
+      </div>
+      <div class="form-group">
+        <label>Nível de acesso</label>
+        <select name="role" class="form-control">
+          <option value="vendedor">Vendedor — acesso restrito</option>
+          <option value="admin">Administrador — acesso total</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:20px;">
+        <button type="submit" class="btn btn-verde">✅ Criar Acesso</button>
+        <a href="{% url 'core:configuracoes' %}" class="btn btn-outline">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

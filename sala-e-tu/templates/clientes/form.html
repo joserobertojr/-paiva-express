@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block page_title %}Clientes{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>{{ titulo }}</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a> <span class="breadcrumb-sep">/</span>
+      <a href="{% url 'clientes:lista' %}">Clientes</a> <span class="breadcrumb-sep">/</span> {{ titulo }}
+    </div>
+  </div>
+</div>
+
+<div class="form-card">
+  <div class="form-header">
+    <div class="form-header-icon">👤</div>
+    <div>
+      <div class="form-title">{{ titulo }}</div>
+      <div class="form-subtitle">Informe ao menos um documento (CPF ou Passaporte)</div>
+    </div>
+  </div>
+
+  {% if form.non_field_errors %}
+  <div style="background:#FFEBEE;border-left:4px solid #C62828;padding:12px 16px;margin:0 20px;border-radius:0 6px 6px 0;font-size:.88rem;color:#B71C1C;">
+    {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+  </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="form-grid">
+
+      <div class="form-group full">
+        <label>Nome completo <span style="color:var(--laranja);">*</span></label>
+        {% render_field form.nome class="form-control" placeholder="Nome completo" %}
+        {{ form.nome.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>Telefone</label>
+        {% render_field form.telefone class="form-control" placeholder="(83) 99999-9999" id="id_telefone" %}
+        {{ form.telefone.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>E-mail</label>
+        {% render_field form.email class="form-control" placeholder="email@exemplo.com" %}
+        {{ form.email.errors }}
+      </div>
+
+      <!-- DOCUMENTOS -->
+      <div class="form-group">
+        <label>CPF <small style="color:var(--cinza-3);">(opcional se tiver Passaporte)</small></label>
+        {% render_field form.cpf class="form-control" placeholder="000.000.000-00" id="id_cpf" maxlength="14" %}
+        {{ form.cpf.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>Passaporte <small style="color:var(--cinza-3);">(opcional se tiver CPF)</small></label>
+        {% render_field form.passaporte class="form-control" placeholder="Ex: BR1234567" %}
+        {{ form.passaporte.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>Data de Nascimento</label>
+        {% render_field form.data_nascimento class="form-control" %}
+        {{ form.data_nascimento.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>Cidade</label>
+        {% render_field form.cidade class="form-control" placeholder="João Pessoa" %}
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-verde">💾 Salvar Cliente</button>
+      <a href="{% url 'clientes:lista' %}" class="btn btn-outline">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Máscara CPF
+  const cpfInput = document.getElementById('id_cpf');
+  if (cpfInput) {
+    cpfInput.addEventListener('input', function() {
+      let v = this.value.replace(/\D/g, '').slice(0, 11);
+      if (v.length > 9)      v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, '$1.$2.$3-$4');
+      else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{0,3})/,        '$1.$2.$3');
+      else if (v.length > 3) v = v.replace(/(\d{3})(\d{0,3})/,               '$1.$2');
+      this.value = v;
+    });
+  }
+
+  // Máscara telefone (XX) 9XXXX-XXXX
+  function mascaraTelefone(el) {
+    let d = el.value.replace(/\D/g, '').slice(0, 11);
+    let r = d;
+    if (d.length > 2)  r = '(' + d.slice(0,2) + ') ' + d.slice(2);
+    if (d.length > 7 && d.length <= 10) r = '(' + d.slice(0,2) + ') ' + d.slice(2,6) + '-' + d.slice(6);
+    if (d.length > 10) r = '(' + d.slice(0,2) + ') ' + d.slice(2,7) + '-' + d.slice(7);
+    el.value = r;
+  }
+  const telInput = document.getElementById('id_telefone');
+  if (telInput) {
+    telInput.addEventListener('input', () => mascaraTelefone(telInput));
+  }
+
+  // Validação de e-mail em tempo real
+  const emailInput = document.querySelector('input[name="email"]');
+  if (emailInput) {
+    emailInput.addEventListener('blur', function() {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      this.style.borderColor = (this.value && !re.test(this.value)) ? '#C62828' : '';
+    });
+  }
+</script>
+{% endblock %}

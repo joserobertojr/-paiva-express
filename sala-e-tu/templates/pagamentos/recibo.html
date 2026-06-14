@@ -1,0 +1,194 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recibo Nº {{ pagamento.pk|stringformat:"05d" }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 13px; color: #111; background: #fff;
+      padding: 40px; max-width: 720px; margin: 0 auto;
+    }
+    .cabecalho {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      border-bottom: 3px solid #1B5E20; padding-bottom: 18px; margin-bottom: 24px;
+    }
+    .empresa-nome { font-size: 22px; font-weight: 900; color: #1B5E20; }
+    .empresa-sub  { font-size: 11px; color: #555; margin-top: 3px; letter-spacing: 1px; text-transform: uppercase; }
+    .recibo-titulo { text-align: right; }
+    .recibo-titulo h2 { font-size: 16px; font-weight: 700; color: #E65100; text-transform: uppercase; letter-spacing: 1px; }
+    .recibo-titulo .num { font-size: 12px; color: #666; margin-top: 4px; }
+
+    .passageiro-box {
+      background: #F1F8E9; border-left: 4px solid #1B5E20;
+      padding: 12px 16px; margin-bottom: 20px; border-radius: 0 6px 6px 0;
+    }
+    .passageiro-box .label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #555; margin-bottom: 4px; }
+    .passageiro-box .nome  { font-size: 16px; font-weight: 700; color: #1B5E20; }
+    .passageiro-box .viagem { font-size: 12px; color: #555; margin-top: 3px; }
+
+    .declaracao {
+      background: #FFFDE7; border: 1px solid #FBC02D;
+      border-radius: 6px; padding: 16px 18px;
+      font-size: 13px; line-height: 1.9; margin-bottom: 24px; text-align: justify;
+    }
+    .declaracao strong { color: #1B5E20; }
+
+    .secao-titulo {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1.5px; color: #555;
+      border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-bottom: 12px;
+    }
+
+    table.detalhes {
+      width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 13px;
+    }
+    table.detalhes th {
+      text-align: left; padding: 8px 12px;
+      background: #E8F5E9; color: #1B5E20; font-weight: 700;
+      font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+    }
+    table.detalhes td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; }
+    table.detalhes tr:last-child td { border-bottom: none; }
+    .valor-destaque { font-size: 15px; font-weight: 800; color: #E65100; }
+
+    .assinatura-area {
+      display: flex; justify-content: space-between; gap: 40px;
+      margin-top: 40px; margin-bottom: 32px;
+    }
+    .assinatura-bloco { flex: 1; text-align: center; }
+    .assinatura-linha { border-top: 1.5px solid #333; margin-bottom: 6px; }
+    .assinatura-bloco p { font-size: 11px; color: #444; }
+
+    .rodape {
+      border-top: 2px solid #1B5E20; padding-top: 16px;
+      display: flex; justify-content: space-between; align-items: flex-start;
+      font-size: 11px; color: #555;
+    }
+    .rodape .local-data { font-style: italic; font-size: 12px; color: #333; }
+    .rodape .dados-empresa { text-align: right; line-height: 1.7; }
+    .rodape .dados-empresa strong { color: #1B5E20; font-size: 12px; display: block; }
+
+    .btn-print {
+      display: block; margin: 0 auto 24px;
+      padding: 12px 32px; background: #1B5E20; color: #fff;
+      border: none; border-radius: 8px; font-size: 15px; font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-print:hover { background: #2E7D32; }
+
+    @media print {
+      .btn-print { display: none !important; }
+      body { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<button class="btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+
+<!-- CABEÇALHO -->
+<div class="cabecalho">
+  <div>
+    <div class="empresa-nome">Saletur Turismo</div>
+    <div class="empresa-sub">Agência de Viagens</div>
+  </div>
+  <div class="recibo-titulo">
+    <h2>Recibo de Pagamento</h2>
+    <div class="num">Nº {{ pagamento.pk|stringformat:"05d" }}</div>
+  </div>
+</div>
+
+<!-- PASSAGEIRO -->
+<div class="passageiro-box">
+  <div class="label">Passageiro / Viagem</div>
+  <div class="nome">{% if passageiro_principal %}{{ passageiro_principal.cliente.nome }}{% else %}—{% endif %}</div>
+  <div class="viagem">{{ reserva.pacote.titulo }} — {{ reserva.pacote.destino }}</div>
+</div>
+
+<!-- TEXTO DECLARATÓRIO -->
+<div class="declaracao">
+  A <strong>Saletur Turismo</strong> declara ter recebido de
+  <strong>{% if passageiro_principal %}{{ passageiro_principal.cliente.nome }}{% else %}—{% endif %}</strong>,
+  inscrito no CPF
+  <strong>{% if passageiro_principal %}{{ passageiro_principal.cliente.doc_formatado }}{% else %}—{% endif %}</strong>,
+  a importância de
+  <strong>R$ {{ pagamento.valor|floatformat:2 }}</strong>
+  referente ao pagamento relacionados da viagem.
+</div>
+
+<!-- DETALHAMENTO DOS SERVIÇOS -->
+<div class="secao-titulo">Serviços / Opcionais Adquiridos</div>
+<table class="detalhes">
+  <thead>
+    <tr><th style="width:40%;">Descrição</th><th>Detalhe</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Forma de Pagamento</strong></td>
+      <td>
+        {{ pagamento.get_forma_display }}
+        {% if pagamento.forma == 'cartao_credito' and pagamento.parcelas and pagamento.parcelas > 1 %}
+          — {{ pagamento.parcelas }}x
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <td><strong>Valor Recebido</strong></td>
+      <td><span class="valor-destaque">R$ {{ pagamento.valor|floatformat:2 }}</span></td>
+    </tr>
+    {% if reserva.saldo_devedor > 0 %}
+    <tr>
+      <td><strong>Saldo Devedor</strong></td>
+      <td style="color:#E65100;font-weight:700;">R$ {{ reserva.saldo_devedor|floatformat:2 }}</td>
+    </tr>
+    {% else %}
+    <tr>
+      <td><strong>Situação</strong></td>
+      <td style="color:#1B5E20;font-weight:700;">✓ Totalmente Quitado</td>
+    </tr>
+    {% endif %}
+    {% if pagamento.vendedor %}
+    <tr>
+      <td><strong>Vendedor</strong></td>
+      <td>{{ pagamento.vendedor.nome }}</td>
+    </tr>
+    {% endif %}
+    {% if pagamento.observacoes %}
+    <tr>
+      <td><strong>Observações</strong></td>
+      <td>{{ pagamento.observacoes }}</td>
+    </tr>
+    {% endif %}
+  </tbody>
+</table>
+
+<!-- ASSINATURAS -->
+<div class="assinatura-area">
+  <div class="assinatura-bloco">
+    <div class="assinatura-linha"></div>
+    <p>Assinatura do Cliente</p>
+  </div>
+  <div class="assinatura-bloco">
+    <div class="assinatura-linha"></div>
+    <p>Saletur Turismo{% if pagamento.vendedor %} — {{ pagamento.vendedor.nome }}{% endif %}</p>
+    <p>Responsável pelo Recebimento</p>
+  </div>
+</div>
+
+<!-- RODAPÉ -->
+<div class="rodape">
+  <div class="local-data">Patos, Paraíba, {{ data_impressao|date:"d \d\e F \d\e Y" }}</div>
+  <div class="dados-empresa">
+    <strong>Saletur Turismo — Agência de Viagens</strong>
+    Patos — Paraíba — Brasil<br/>
+    contato@saletur.com.br
+  </div>
+</div>
+
+<script>window.addEventListener('load', () => window.print());</script>
+</body>
+</html>

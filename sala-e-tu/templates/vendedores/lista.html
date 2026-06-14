@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Vendedores{% endblock %}
+{% block page_title %}Vendedores{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>🧑‍💼 Vendedores</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a>
+      <span class="breadcrumb-sep">/</span> Vendedores
+    </div>
+  </div>
+  {% if eh_admin %}
+  <a href="{% url 'vendedores:cadastrar' %}" class="btn btn-verde">➕ Cadastrar Vendedor</a>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <div class="panel-body">
+    {% if vendedores %}
+    <div class="table-responsive">
+      <table class="saleetur-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Telefone</th>
+            {% if eh_admin %}<th></th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in vendedores %}
+          <tr>
+            <td><strong>{{ v.nome }}</strong></td>
+            <td>{{ v.telefone }}</td>
+            {% if eh_admin %}
+            <td style="display:flex;gap:6px;">
+              <a href="{% url 'vendedores:editar' v.pk %}" class="btn btn-outline btn-sm">✏️ Editar</a>
+              <a href="{% url 'vendedores:excluir' v.pk %}" class="btn btn-danger btn-sm"
+                 onclick="return confirm('Remover {{ v.nome }}?')">🗑️</a>
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🧑‍💼</div>
+        <p>Nenhum vendedor cadastrado.<br/>
+        {% if eh_admin %}
+        <a href="{% url 'vendedores:cadastrar' %}" class="btn btn-verde" style="margin-top:14px;display:inline-flex;">Cadastrar Vendedor</a>
+        {% endif %}
+        </p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

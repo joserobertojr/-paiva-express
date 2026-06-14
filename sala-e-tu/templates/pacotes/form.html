@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block page_title %}Pacotes{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>{{ titulo }}</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a>
+      <span class="breadcrumb-sep">/</span>
+      <a href="{% url 'pacotes:lista' %}">Pacotes</a>
+      <span class="breadcrumb-sep">/</span> {{ titulo }}
+    </div>
+  </div>
+</div>
+
+<div class="form-card" style="max-width:900px;">
+  <div class="form-header">
+    <div class="form-header-icon">🌍</div>
+    <div>
+      <div class="form-title">{{ titulo }}</div>
+      <div class="form-subtitle">Configure o pacote de viagem</div>
+    </div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>{{ form.titulo.label }}</label>
+        {% render_field form.titulo class="form-control" placeholder="Ex: Fernando de Noronha Premium" %}
+        {{ form.titulo.errors }}
+      </div>
+
+      <div class="form-group full">
+        <label>{{ form.destino.label }}</label>
+        {% render_field form.destino class="form-control" placeholder="Ex: Fernando de Noronha, PE" %}
+        {{ form.destino.errors }}
+      </div>
+
+      <div class="form-group full">
+        <label>{{ form.descricao.label }}</label>
+        {% render_field form.descricao class="form-control" placeholder="Descreva o pacote..." %}
+        {{ form.descricao.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>{{ form.data_saida.label }}</label>
+        {% render_field form.data_saida class="form-control" %}
+        {{ form.data_saida.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>{{ form.data_retorno.label }}</label>
+        {% render_field form.data_retorno class="form-control" %}
+        {{ form.data_retorno.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>{{ form.valor.label }}</label>
+        {% render_field form.valor class="form-control" placeholder="0.00" %}
+        {{ form.valor.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>{{ form.vagas_totais.label }}</label>
+        {% render_field form.vagas_totais class="form-control" %}
+      </div>
+
+      <div class="form-group">
+        <label>{{ form.vagas_disponiveis.label }}</label>
+        {% render_field form.vagas_disponiveis class="form-control" %}
+      </div>
+
+      <div class="form-group full">
+        <label>{{ form.inclui.label }}</label>
+        {% render_field form.inclui class="form-control" placeholder="Passagem aérea, hotel, café da manhã..." %}
+      </div>
+
+      <div class="form-group full">
+        <label>{{ form.nao_inclui.label }}</label>
+        {% render_field form.nao_inclui class="form-control" placeholder="Seguro de viagem, refeições extras..." %}
+      </div>
+
+      <div class="form-group">
+        <label>{{ form.imagem.label }}</label>
+        {% render_field form.imagem class="form-control" %}
+      </div>
+
+      <div class="form-group" style="justify-content:flex-end;padding-top:24px;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          {% render_field form.ativo %}
+          <span>{{ form.ativo.label }}</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-verde">💾 Salvar Pacote</button>
+      <a href="{% url 'pacotes:lista' %}" class="btn btn-outline">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

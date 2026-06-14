@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s -o /dev/null -w \"CSS: HTTP %{http_code} | %{size_download} bytes\\\\n\" http://127.0.0.1:8765/static/css/style.css)"
+    ]
+  }
+}

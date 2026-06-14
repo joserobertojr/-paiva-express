@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% block title %}Clientes{% endblock %}
+{% block page_title %}Clientes{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>👥 Clientes</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a> <span class="breadcrumb-sep">/</span> Clientes
+    </div>
+  </div>
+  <a href="{% url 'clientes:cadastrar' %}" class="btn btn-verde">➕ Novo Cliente</a>
+</div>
+
+<div class="panel" style="margin-bottom:16px;">
+  <div class="panel-body" style="padding:14px 20px;">
+    <form method="get" style="display:flex;gap:10px;align-items:center;">
+      <input type="search" name="q" value="{{ q }}" placeholder="Buscar por nome..."
+             style="flex:1;padding:9px 14px;border:1.5px solid #ECEFF1;border-radius:8px;font-size:.9rem;outline:none;" />
+      <button type="submit" class="btn btn-verde btn-sm">🔍 Buscar</button>
+      {% if q %}<a href="{% url 'clientes:lista' %}" class="btn btn-outline btn-sm">✕ Limpar</a>{% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-body">
+    {% if clientes %}
+    <div class="table-responsive">
+      <table class="saleetur-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>CPF</th>
+            <th>Passaporte</th>
+            <th>Telefone</th>
+            <th>Cidade</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in clientes %}
+          <tr>
+            <td><strong>{{ c.nome }}</strong></td>
+            <td>{% if c.cpf %}{{ c.doc_formatado }}{% else %}<span style="color:var(--cinza-3);">—</span>{% endif %}</td>
+            <td>{{ c.passaporte|default:"—" }}</td>
+            <td>{{ c.telefone|default:"—" }}</td>
+            <td>{{ c.cidade|default:"—" }}</td>
+            <td>
+              <button class="btn btn-outline btn-sm btn-visualizar"
+                data-nome="{{ c.nome }}"
+                data-cpf="{% if c.cpf %}{{ c.doc_formatado }}{% else %}—{% endif %}"
+                data-passaporte="{{ c.passaporte|default:'—' }}"
+                data-tel="{{ c.telefone|default:'—' }}"
+                data-email="{{ c.email|default:'—' }}"
+                data-cidade="{{ c.cidade|default:'—' }}"
+                data-nasc="{{ c.data_nascimento|date:'d/m/Y'|default:'—' }}"
+                data-pk="{{ c.pk }}">
+                👁 Visualizar
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">👥</div>
+        <p>Nenhum cliente encontrado.<br/>
+        <a href="{% url 'clientes:cadastrar' %}" class="btn btn-verde" style="margin-top:14px;display:inline-flex;">Cadastrar cliente</a></p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- MODAL DE VISUALIZAÇÃO -->
+<div class="modal-overlay" id="modal-cliente" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="m-nome"></h3>
+      <button class="modal-close" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-row"><span class="modal-label">CPF</span><span id="m-cpf"></span></div>
+      <div class="modal-row"><span class="modal-label">Passaporte</span><span id="m-passaporte"></span></div>
+      <div class="modal-row"><span class="modal-label">Telefone</span><span id="m-tel"></span></div>
+      <div class="modal-row"><span class="modal-label">E-mail</span><span id="m-email"></span></div>
+      <div class="modal-row"><span class="modal-label">Cidade</span><span id="m-cidade"></span></div>
+      <div class="modal-row"><span class="modal-label">Nascimento</span><span id="m-nasc"></span></div>
+    </div>
+    <div style="padding:12px 20px;border-top:1px solid var(--borda);display:flex;gap:8px;justify-content:flex-end;">
+      {% if eh_admin %}
+      <a id="m-editar" href="#" class="btn btn-outline btn-sm">✏️ Editar</a>
+      <a id="m-excluir" href="#" class="btn btn-danger btn-sm"
+         onclick="return confirm('Remover este cliente?')">🗑️ Remover</a>
+      {% endif %}
+      <button class="btn btn-outline btn-sm" onclick="fecharModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.querySelectorAll('.btn-visualizar').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const d = this.dataset;
+      document.getElementById('m-nome').textContent       = d.nome;
+      document.getElementById('m-cpf').textContent        = d.cpf;
+      document.getElementById('m-passaporte').textContent = d.passaporte;
+      document.getElementById('m-tel').textContent        = d.tel;
+      document.getElementById('m-email').textContent      = d.email;
+      document.getElementById('m-cidade').textContent     = d.cidade;
+      document.getElementById('m-nasc').textContent       = d.nasc;
+      {% if eh_admin %}
+      document.getElementById('m-editar').href   = `/clientes/${d.pk}/editar/`;
+      document.getElementById('m-excluir').href  = `/clientes/${d.pk}/excluir/`;
+      {% endif %}
+      document.getElementById('modal-cliente').style.display = 'flex';
+    });
+  });
+
+  function fecharModal() {
+    document.getElementById('modal-cliente').style.display = 'none';
+  }
+  document.getElementById('modal-cliente').addEventListener('click', function(e) {
+    if (e.target === this) fecharModal();
+  });
+</script>
+{% endblock %}

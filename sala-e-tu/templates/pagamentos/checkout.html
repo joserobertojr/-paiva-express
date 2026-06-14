@@ -1,0 +1,268 @@
+{% extends 'base.html' %}
+{% block title %}Pagamento — Reserva #{{ reserva.pk }}{% endblock %}
+{% block page_title %}Pagamento{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>💳 Pagamento — Reserva #{{ reserva.pk }}</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a> <span class="breadcrumb-sep">/</span>
+      <a href="{% url 'reservas:lista' %}">Reservas</a> <span class="breadcrumb-sep">/</span> Pagamento
+    </div>
+  </div>
+  <a href="{% url 'reservas:gestao_pacote' reserva.pacote.pk %}" class="btn btn-outline">
+    ← Voltar ao Pacote
+  </a>
+</div>
+
+<div class="checkout-grid">
+
+  <!-- COLUNA ESQUERDA -->
+  <div>
+
+    <!-- SALDO DEVEDOR EM DESTAQUE -->
+    {% if saldo > 0 %}
+    <div class="saldo-destaque saldo-aberto">
+      <div class="saldo-icone">⏳</div>
+      <div>
+        <div class="saldo-label">Saldo Devedor</div>
+        <div class="saldo-valor">R$ {{ saldo|floatformat:2 }}</div>
+      </div>
+      <div class="saldo-pago">
+        <small>Pago: R$ {{ total_pago|floatformat:2 }}</small><br/>
+        <small>Total: R$ {{ reserva.valor_total|floatformat:2 }}</small>
+      </div>
+    </div>
+    {% else %}
+    <div class="saldo-destaque saldo-quitado">
+      <div class="saldo-icone">✅</div>
+      <div>
+        <div class="saldo-label">Reserva Quitada</div>
+        <div class="saldo-valor">R$ 0,00</div>
+      </div>
+      <div class="saldo-pago">
+        <small>Total pago: R$ {{ total_pago|floatformat:2 }}</small>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- BARRA DE PROGRESSO -->
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="panel-body" style="padding:16px 24px;">
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" style="width:{{ percentual }}%;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.82rem;color:var(--cinza-3);">
+          <span>{{ percentual }}% pago</span>
+          <span>R$ {{ total_pago|floatformat:2 }} de R$ {{ reserva.valor_total|floatformat:2 }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM DE PAGAMENTO -->
+    {% if saldo > 0 %}
+    <div class="form-card" style="max-width:100%;margin-bottom:20px;">
+      <div class="form-header">
+        <div class="form-header-icon">➕</div>
+        <div><div class="form-title">Registrar Pagamento</div></div>
+      </div>
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- FORMA -->
+        <div style="margin-bottom:16px;">
+          <label style="font-size:.82rem;font-weight:700;color:var(--cinza-3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:10px;">Forma de Pagamento</label>
+          <div class="payment-methods" style="grid-template-columns:repeat(3,1fr);">
+            <div class="payment-method" data-value="pix" onclick="selPag(this)">
+              <div class="pm-icon">⚡</div><div class="pm-label">PIX</div>
+            </div>
+            <div class="payment-method" data-value="dinheiro" onclick="selPag(this)">
+              <div class="pm-icon">💵</div><div class="pm-label">Dinheiro</div>
+            </div>
+            <div class="payment-method" data-value="cartao_credito" onclick="selPag(this)">
+              <div class="pm-icon">💳</div><div class="pm-label">Cartão de Crédito</div>
+            </div>
+          </div>
+          <input type="hidden" name="forma" id="forma-input" />
+        </div>
+
+        <!-- PARCELAS (só cartão) -->
+        <div class="form-group" id="parcelas-group" style="display:none;margin-bottom:14px;">
+          <label>Número de Parcelas <span style="color:red">*</span></label>
+          <select name="parcelas" id="parcelas-select" class="form-control">
+            {% for i in "123456789012"|make_list %}{% endfor %}
+            <option value="1">1x (à vista)</option>
+            <option value="2">2x</option>
+            <option value="3">3x</option>
+            <option value="4">4x</option>
+            <option value="5">5x</option>
+            <option value="6">6x</option>
+            <option value="7">7x</option>
+            <option value="8">8x</option>
+            <option value="9">9x</option>
+            <option value="10">10x</option>
+            <option value="11">11x</option>
+            <option value="12">12x</option>
+          </select>
+        </div>
+
+        <!-- VENDEDOR -->
+        <div class="form-group" style="margin-bottom:14px;">
+          <label>Vendedor Responsável</label>
+          <select name="vendedor" class="form-control">
+            <option value="">— Nenhum —</option>
+            {% for v in vendedores %}
+            <option value="{{ v.pk }}">{{ v.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- VALOR -->
+        <div class="form-group" style="margin-bottom:14px;">
+          <label>Valor Recebido (R$) <span style="color:red">*</span></label>
+          <input type="text" name="valor" id="valor-input" class="form-control"
+                 placeholder="0,00" oninput="calcSaldo(this.value)" autocomplete="off" />
+          <div id="parcelas-preview" style="display:none;margin-top:6px;padding:8px 12px;background:var(--verde-light);border-radius:6px;font-size:.82rem;color:var(--verde-dark);font-weight:600;"></div>
+          <div style="margin-top:8px;padding:10px 14px;background:var(--cinza-bg);border-radius:8px;display:flex;justify-content:space-between;font-size:.88rem;">
+            <span>Saldo após este pagamento:</span>
+            <strong id="saldo-preview" style="color:var(--laranja);">R$ {{ saldo|floatformat:2 }}</strong>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Observação</label>
+          <input type="text" name="observacoes" class="form-control" placeholder="Opcional" />
+        </div>
+
+        <button type="submit" class="btn btn-laranja" style="width:100%;justify-content:center;padding:12px;">
+          ✅ Registrar Entrada
+        </button>
+      </form>
+    </div>
+    {% endif %}
+
+    <!-- HISTÓRICO -->
+    {% if pagamentos %}
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot"></span> Histórico de Pagamentos</div>
+      </div>
+      <div class="panel-body">
+        <table class="saleetur-table">
+          <thead>
+            <tr><th>#</th><th>Forma</th><th>Parcelas</th><th>Vendedor</th><th>Valor</th><th>Data</th><th>Recibo</th></tr>
+          </thead>
+          <tbody>
+            {% for p in pagamentos %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>
+                {% if p.forma == 'pix' %}⚡{% elif p.forma == 'dinheiro' %}💵{% else %}💳{% endif %}
+                {{ p.get_forma_display }}
+              </td>
+              <td style="text-align:center;">
+                {% if p.forma == 'cartao_credito' %}{{ p.parcelas|default:1 }}x{% else %}—{% endif %}
+              </td>
+              <td>{{ p.vendedor.nome|default:"—" }}</td>
+              <td><strong style="color:var(--verde);">R$ {{ p.valor|floatformat:2 }}</strong></td>
+              <td style="font-size:.8rem;color:var(--cinza-3);">{{ p.registrado_em|date:"d/m/Y H:i" }}</td>
+              <td>
+                <a href="{% url 'pagamentos:recibo' p.pk %}" target="_blank"
+                   class="btn btn-outline btn-sm" title="Imprimir recibo">
+                  🖨️ Imprimir
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+
+  <!-- COLUNA DIREITA: RESUMO -->
+  <div>
+    <div class="checkout-summary" style="margin-bottom:16px;">
+      <h3>Resumo da Reserva</h3>
+      <div class="summary-row"><span class="label">Pacote</span><span class="value">{{ reserva.pacote.titulo }}</span></div>
+      <div class="summary-row"><span class="label">Destino</span><span class="value">{{ reserva.pacote.destino }}</span></div>
+      <div class="summary-row"><span class="label">Saída</span><span class="value">{{ reserva.pacote.data_saida|date:"d/m/Y" }}</span></div>
+      <div class="summary-row"><span class="label">Retorno</span><span class="value">{{ reserva.pacote.data_retorno|date:"d/m/Y" }}</span></div>
+      <div class="summary-row"><span class="label">Passageiros</span><span class="value">{{ reserva.num_passageiros }}</span></div>
+      <div class="summary-total">
+        <span class="label">Total</span>
+        <span class="value">R$ {{ reserva.valor_total|floatformat:2 }}</span>
+      </div>
+    </div>
+
+    <!-- PASSAGEIROS -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="dot"></span> Passageiros</div>
+      </div>
+      <div class="panel-body">
+        {% for pax in passageiros %}
+        <div class="pacote-item">
+          <div class="pacote-thumb" style="background:{% if pax.principal %}var(--laranja){% else %}var(--verde-mid){% endif %};">{{ forloop.counter }}</div>
+          <div class="pacote-info">
+            <div class="pacote-nome">{{ pax.cliente.nome }}</div>
+            <div class="pacote-destino">{{ pax.cliente.doc_formatado }}{% if pax.principal %} · <span style="color:var(--laranja);font-weight:700;">Principal</span>{% endif %}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;">
+      <a href="{% url 'reservas:gestao_pacote' reserva.pacote.pk %}"
+         class="btn btn-outline" style="width:100%;justify-content:center;">
+        ← Voltar ao Pacote
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const saldoTotal = parseFloat('{{ saldo|floatformat:2 }}'.replace(',', '.'));
+
+function selPag(el) {
+  document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('forma-input').value = el.dataset.value;
+  const isCartao = el.dataset.value === 'cartao_credito';
+  document.getElementById('parcelas-group').style.display = isCartao ? 'flex' : 'none';
+  if (!isCartao) document.getElementById('parcelas-preview').style.display = 'none';
+  calcSaldo(document.getElementById('valor-input').value);
+}
+
+function calcSaldo(raw) {
+  const valor = parseFloat((raw || '0').replace(',', '.')) || 0;
+  const restante = Math.max(0, saldoTotal - valor);
+  const el = document.getElementById('saldo-preview');
+  if (el) {
+    el.textContent = 'R$ ' + restante.toLocaleString('pt-BR', {minimumFractionDigits:2});
+    el.style.color = restante === 0 ? 'var(--verde)' : 'var(--laranja)';
+  }
+  // Preview de parcelas
+  const forma = document.getElementById('forma-input').value;
+  const parcelas = parseInt(document.getElementById('parcelas-select')?.value || 1);
+  const preview = document.getElementById('parcelas-preview');
+  if (preview && forma === 'cartao_credito' && valor > 0 && parcelas > 1) {
+    const porParcela = (valor / parcelas).toLocaleString('pt-BR', {minimumFractionDigits:2});
+    preview.textContent = `${parcelas}x de R$ ${porParcela}`;
+    preview.style.display = 'block';
+  } else if (preview) {
+    preview.style.display = 'none';
+  }
+}
+
+document.getElementById('parcelas-select')?.addEventListener('change', () => {
+  calcSaldo(document.getElementById('valor-input').value);
+});
+</script>
+{% endblock %}

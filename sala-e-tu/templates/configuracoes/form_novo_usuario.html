@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Adicionar Usuário{% endblock %}
+{% block page_title %}Configurações{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>➕ Adicionar Usuário</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a>
+      <span class="breadcrumb-sep">/</span>
+      <a href="{% url 'core:configuracoes' %}">Configurações</a>
+      <span class="breadcrumb-sep">/</span> Novo
+    </div>
+  </div>
+</div>
+
+<div style="max-width:580px;">
+  <form method="post" novalidate id="form-acesso">
+    {% csrf_token %}
+    <div class="form-card" style="margin-bottom:16px;">
+      <div class="form-header">
+        <div class="form-header-icon">🧑‍💼</div>
+        <div><div class="form-title">Dados de Acesso</div></div>
+      </div>
+      <div class="form-grid" style="padding:0 20px 16px;">
+        <div class="form-group full">
+          <label>Vendedor</label>
+          <select name="vendedor" class="form-control" required>
+            <option value="">— Selecione —</option>
+            {% for v in vendedores_sem_acesso %}
+            <option value="{{ v.pk }}">{{ v.nome }}</option>
+            {% endfor %}
+          </select>
+          {% if not vendedores_sem_acesso %}
+          <small style="color:var(--cinza-3);">Todos os vendedores já possuem acesso.</small>
+          {% endif %}
+        </div>
+        <div class="form-group">
+          <label>Usuário (login)</label>
+          <input type="text" name="username" class="form-control" required
+                 placeholder="ex: joao.silva" autocomplete="username" />
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" name="senha" class="form-control" required
+                 placeholder="Mínimo 8 caracteres" minlength="8" autocomplete="new-password" />
+        </div>
+        <div class="form-group full">
+          <label>Perfil de acesso</label>
+          <select name="role" class="form-control" id="sel-role" onchange="togglePerms()">
+            <option value="vendedor">Vendedor — permissões personalizadas</option>
+            <option value="admin">Administrador — acesso total</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- PERMISSÕES GRANULARES -->
+    <div class="form-card" id="card-perms">
+      <div class="form-header">
+        <div class="form-header-icon">🔐</div>
+        <div>
+          <div class="form-title">Módulos com acesso</div>
+          <div class="form-subtitle">Defina o que este usuário pode acessar</div>
+        </div>
+      </div>
+      <div style="padding:8px 20px 20px;">
+        {% for secao, label in secoes %}
+        <label style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--borda);cursor:pointer;">
+          <input type="checkbox" name="perm_{{ secao }}"
+                 {% if secao == 'clientes' or secao == 'reservas' or secao == 'pagamentos' %}checked{% endif %}
+                 style="width:18px;height:18px;accent-color:var(--verde);cursor:pointer;" />
+          <span style="font-size:.92rem;font-weight:500;">{{ label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-top:20px;">
+      <button type="submit" class="btn btn-verde">✅ Criar Usuário</button>
+      <a href="{% url 'core:configuracoes' %}" class="btn btn-outline">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+function togglePerms() {
+  const role = document.getElementById('sel-role').value;
+  const card = document.getElementById('card-perms');
+  card.style.opacity = role === 'admin' ? '.4' : '1';
+  card.querySelectorAll('input[type=checkbox]').forEach(cb => cb.disabled = role === 'admin');
+}
+togglePerms();
+</script>
+{% endblock %}

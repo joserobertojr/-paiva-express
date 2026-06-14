@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% block title %}Nova Reserva{% endblock %}
+{% block page_title %}Reservas{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>✈️ Nova Reserva</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a> <span class="breadcrumb-sep">/</span>
+      <a href="{% url 'reservas:lista' %}">Reservas</a> <span class="breadcrumb-sep">/</span> Nova
+    </div>
+  </div>
+</div>
+
+<form method="post" novalidate id="form-reserva">
+  {% csrf_token %}
+  <div style="display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start;">
+
+    <!-- LADO ESQUERDO -->
+    <div>
+      <!-- PACOTE + VENDEDOR -->
+      <div class="form-card" style="max-width:100%;margin-bottom:20px;">
+        <div class="form-header">
+          <div class="form-header-icon">🗺️</div>
+          <div><div class="form-title">Dados da Reserva</div></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Pacote</label>
+            <select name="pacote" class="form-control" required id="sel-pacote">
+              <option value="">— Selecione um pacote —</option>
+              {% for p in pacotes %}
+              <option value="{{ p.pk }}" data-valor="{{ p.valor }}" data-destino="{{ p.destino }}"
+                      data-saida="{{ p.data_saida|date:'d/m/Y' }}" data-retorno="{{ p.data_retorno|date:'d/m/Y' }}"
+                      {% if pacote_inicial and pacote_inicial.pk == p.pk %}selected{% endif %}>
+                {{ p.titulo }} — {{ p.destino }} ({{ p.data_saida|date:"d/m/Y" }}) — R$ {{ p.valor }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Vendedor</label>
+            <select name="vendedor" class="form-control">
+              <option value="">— Nenhum —</option>
+              {% for v in vendedores %}
+              <option value="{{ v.pk }}">{{ v.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Número de Passageiros</label>
+            <input type="number" name="num_passageiros" id="num-passageiros"
+                   class="form-control" min="1" max="50" value="1" required />
+          </div>
+
+          <div class="form-group full">
+            <label>Observações</label>
+            <textarea name="observacoes" class="form-control" rows="2"
+                      placeholder="Observações especiais, restrições..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASSAGEIROS DINÂMICOS -->
+      <div id="passageiros-container"></div>
+    </div>
+
+    <!-- LADO DIREITO: RESUMO -->
+    <div class="form-card" style="max-width:100%;position:sticky;top:80px;">
+      <div class="form-header">
+        <div class="form-header-icon">📋</div>
+        <div><div class="form-title">Resumo</div></div>
+      </div>
+      <div style="padding:4px 4px 16px;">
+        <div class="summary-row-sm"><span>Destino</span><strong id="res-destino">—</strong></div>
+        <div class="summary-row-sm"><span>Saída</span><strong id="res-saida">—</strong></div>
+        <div class="summary-row-sm"><span>Retorno</span><strong id="res-retorno">—</strong></div>
+        <div class="summary-row-sm"><span>Valor/pax</span><strong id="res-valor">—</strong></div>
+        <div class="summary-row-sm"><span>Passageiros</span><strong id="res-pax">1</strong></div>
+        <div style="background:var(--laranja);border-radius:10px;padding:14px 16px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;color:#fff;">
+          <span style="font-weight:600;">Total</span>
+          <span style="font-size:1.4rem;font-weight:800;" id="res-total">—</span>
+        </div>
+        <button type="submit" class="btn btn-verde" style="width:100%;margin-top:14px;justify-content:center;padding:12px;">
+          ✅ Confirmar Reserva
+        </button>
+      </div>
+    </div>
+
+  </div>
+</form>
+
+<!-- TEMPLATE DE PASSAGEIRO (invisível, clonado por JS) -->
+<template id="tpl-passageiro">
+  <div class="form-card pax-card" style="max-width:100%;margin-bottom:12px;">
+    <div class="pax-card-header">
+      <span class="pax-num"></span>
+    </div>
+    <div style="padding:16px;">
+      <!-- Busca -->
+      <div class="form-group" style="margin-bottom:10px;">
+        <label>Buscar cliente por nome</label>
+        <div class="cliente-search-wrap">
+          <input type="text" class="form-control cliente-search-input" placeholder="Digite para buscar..." autocomplete="off" />
+          <input type="hidden" class="cliente-id-input" />
+          <div class="cliente-search-results"></div>
+        </div>
+      </div>
+      <!-- Selecionado -->
+      <div class="cliente-selecionado" style="display:none;">
+        <div style="background:var(--verde-light);border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <strong class="sel-nome"></strong>
+            <div style="font-size:.8rem;color:var(--cinza-3);margin-top:2px;">
+              <span class="sel-doc"></span> · <span class="sel-cidade"></span>
+            </div>
+          </div>
+          <button type="button" class="btn-trocar btn btn-outline btn-sm">Trocar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CLIENTES = {{ clientes_json|safe }};
+
+function formatarReais(v) {
+  return 'R$ ' + parseFloat(v).toLocaleString('pt-BR', {minimumFractionDigits:2});
+}
+
+// Atualiza resumo lateral
+function atualizarResumo() {
+  const opt = document.getElementById('sel-pacote').selectedOptions[0];
+  const pax = parseInt(document.getElementById('num-passageiros').value) || 1;
+
+  document.getElementById('res-pax').textContent = pax;
+
+  if (opt && opt.value) {
+    const val = parseFloat(opt.dataset.valor);
+    document.getElementById('res-destino').textContent = opt.dataset.destino;
+    document.getElementById('res-saida').textContent   = opt.dataset.saida;
+    document.getElementById('res-retorno').textContent = opt.dataset.retorno;
+    document.getElementById('res-valor').textContent   = formatarReais(val);
+    document.getElementById('res-total').textContent   = formatarReais(val * pax);
+  } else {
+    ['res-destino','res-saida','res-retorno','res-valor','res-total'].forEach(id => {
+      document.getElementById(id).textContent = '—';
+    });
+  }
+}
+
+// Gera cards de passageiro
+function gerarPassageiros(n) {
+  const container = document.getElementById('passageiros-container');
+  container.innerHTML = '';
+  for (let i = 1; i <= n; i++) {
+    const tpl = document.getElementById('tpl-passageiro').content.cloneNode(true);
+    const card = tpl.querySelector('.pax-card');
+    card.dataset.index = i;
+    card.querySelector('.pax-num').textContent = i === 1 ? '👤 Passageiro Principal' : `👤 Passageiro ${i}`;
+    card.querySelector('.cliente-id-input').name = `cliente_${i}`;
+    iniciarBusca(card, i);
+    container.appendChild(tpl);
+  }
+}
+
+// Lógica de busca em cada card
+function iniciarBusca(card, idx) {
+  const searchInput  = card.querySelector('.cliente-search-input');
+  const idInput      = card.querySelector('.cliente-id-input');
+  const resultsDiv   = card.querySelector('.cliente-search-results');
+  const selecionado  = card.querySelector('.cliente-selecionado');
+  const selNome      = card.querySelector('.sel-nome');
+  const selDoc       = card.querySelector('.sel-doc');
+  const selCidade    = card.querySelector('.sel-cidade');
+  const btnTrocar    = card.querySelector('.btn-trocar');
+
+  function mostrarResultados(q) {
+    const filtro = CLIENTES.filter(c =>
+      c.nome.toLowerCase().includes(q.toLowerCase())
+    ).slice(0, 8);
+    resultsDiv.innerHTML = '';
+    if (!filtro.length) {
+      resultsDiv.innerHTML = '<div class="sr-vazio">Nenhum cliente encontrado</div>';
+      resultsDiv.classList.add('open');
+      return;
+    }
+    filtro.forEach(c => {
+      const item = document.createElement('div');
+      item.className = 'sr-item';
+      item.innerHTML = `<strong>${c.nome}</strong> <span>${c.documento} · ${c.cidade || '—'}</span>`;
+      item.addEventListener('click', () => {
+        idInput.value          = c.id;
+        selNome.textContent    = c.nome;
+        selDoc.textContent     = c.documento;
+        selCidade.textContent  = c.cidade || '—';
+        selecionado.style.display  = 'block';
+        searchInput.style.display  = 'none';
+        resultsDiv.innerHTML       = '';
+        resultsDiv.classList.remove('open');
+      });
+      resultsDiv.appendChild(item);
+    });
+    resultsDiv.classList.add('open');
+  }
+
+  searchInput.addEventListener('input', () => {
+    if (searchInput.value.length >= 1) mostrarResultados(searchInput.value);
+    else { resultsDiv.innerHTML = ''; resultsDiv.classList.remove('open'); }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!card.contains(e.target)) {
+      resultsDiv.innerHTML = ''; resultsDiv.classList.remove('open');
+    }
+  });
+
+  btnTrocar.addEventListener('click', () => {
+    idInput.value              = '';
+    searchInput.value          = '';
+    selecionado.style.display  = 'none';
+    searchInput.style.display  = 'block';
+    searchInput.focus();
+  });
+}
+
+// Eventos
+document.getElementById('sel-pacote').addEventListener('change', atualizarResumo);
+document.getElementById('num-passageiros').addEventListener('input', function() {
+  const n = Math.max(1, parseInt(this.value) || 1);
+  this.value = n;
+  gerarPassageiros(n);
+  atualizarResumo();
+});
+
+// Init
+gerarPassageiros(1);
+atualizarResumo();
+</script>
+{% endblock %}

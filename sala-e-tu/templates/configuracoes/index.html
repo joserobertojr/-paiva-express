@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Configurações{% endblock %}
+{% block page_title %}Configurações{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>⚙️ Configurações</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a>
+      <span class="breadcrumb-sep">/</span> Configurações
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <a href="{% url 'core:conf_logs' %}" class="btn btn-outline">🔍 Log de Auditoria</a>
+    <a href="{% url 'core:conf_novo_usuario' %}" class="btn btn-verde">➕ Adicionar Usuário</a>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-body">
+    {% if usuarios %}
+    <div class="table-responsive">
+      <table class="saleetur-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Usuário (login)</th>
+            <th>Perfil</th>
+            <th>Módulos com acesso</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in usuarios %}
+          {% with perfil=v.user.perfil %}
+          <tr>
+            <td><strong>{{ v.nome }}</strong></td>
+            <td>
+              <span style="font-family:monospace;font-size:.85rem;background:var(--cinza-1);padding:2px 8px;border-radius:6px;">
+                {{ v.user.username }}
+              </span>
+            </td>
+            <td>
+              {% if v.user.is_superuser or perfil.role == 'admin' %}
+                <span style="background:#E8F5E9;color:#1B5E20;padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:700;">
+                  Administrador
+                </span>
+              {% else %}
+                <span style="background:#EDE7F6;color:#4527A0;padding:3px 10px;border-radius:12px;font-size:.8rem;">
+                  Vendedor
+                </span>
+              {% endif %}
+            </td>
+            <td style="font-size:.78rem;color:var(--cinza-3);">
+              {% if v.user.is_superuser or perfil.role == 'admin' %}
+                <span style="color:var(--verde);font-weight:600;">Acesso Total</span>
+              {% else %}
+                {% if perfil.perm_clientes %}Clientes{% endif %}
+                {% if perfil.perm_reservas %} · Reservas{% endif %}
+                {% if perfil.perm_pagamentos %} · Pagamentos{% endif %}
+                {% if perfil.perm_pacotes %} · Pacotes{% endif %}
+                {% if perfil.perm_vendedores %} · Vendedores{% endif %}
+                {% if perfil.perm_relatorios %} · Relatórios{% endif %}
+                {% if perfil.perm_configuracoes %} · Configurações{% endif %}
+              {% endif %}
+            </td>
+            <td style="display:flex;gap:6px;justify-content:flex-end;">
+              <a href="{% url 'core:conf_editar_usuario' v.pk %}" class="btn btn-outline btn-sm">✏️ Editar</a>
+              {% if not v.user.is_superuser %}
+              <form method="post" action="{% url 'core:conf_excluir_usuario' v.pk %}"
+                    style="display:inline;"
+                    onsubmit="return confirm('Excluir acesso de {{ v.nome }}? Esta ação não pode ser desfeita.')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-sm">🗑️ Excluir</button>
+              </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🔐</div>
+        <p>Nenhum usuário cadastrado.<br/>
+        <a href="{% url 'core:conf_novo_usuario' %}" class="btn btn-verde" style="margin-top:14px;display:inline-flex;">
+          ➕ Adicionar Usuário
+        </a></p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

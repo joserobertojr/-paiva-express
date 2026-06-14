@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contato | Apple House Patos</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html"><span>Apple House</span><small>Patos</small></a>
+    <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false"><span></span><span></span></button>
+    <nav class="nav" aria-label="Navegação principal">
+      <a href="index.html">Início</a><a href="catalogo.html">Catálogo</a><a href="pagamento.html">Pagamento</a><a href="sobre.html">Sobre</a><a class="active" href="contato.html">Contato</a>
+    </nav>
+    <a class="header-cta" href="https://wa.me/5583998824626" target="_blank" rel="noopener">WhatsApp</a>
+  </header>
+
+  <main class="page contact-page">
+    <section class="page-title">
+      <p class="eyebrow">Contato</p>
+      <h1>Fale com a Apple House.</h1>
+      <p>Atendimento pelo WhatsApp e novidades no Instagram.</p>
+      <div class="contact-buttons">
+        <a href="https://wa.me/5583998824626" target="_blank" rel="noopener">WhatsApp: 83 9 9882-4626</a>
+        <a href="https://www.instagram.com/applehouse.patos" target="_blank" rel="noopener">Instagram: @applehouse.patos</a>
+      </div>
+    </section>
+
+    <form class="lead-form">
+      <label>Seu nome<input type="text" name="nome" placeholder="Digite seu nome" required></label>
+      <label>Modelo de interesse<select name="modelo"><option>iPhone Pro</option><option>iPhone 15</option><option>iPhone 14 ou 13</option><option>Quero ajuda para escolher</option></select></label>
+      <label>Pagamento<select name="pagamento"><option>Cartão em até 21x</option><option>Boleto em até 36x</option><option>Quero comparar as duas opções</option></select></label>
+      <button class="button primary" type="submit">Enviar pelo WhatsApp</button>
+    </form>
+  </main>
+
+  <footer class="site-footer"><p>Apple House Patos</p><p>WhatsApp: 83 9 9882-4626</p></footer>
+  <script src="script.js"></script>
+</body>
+</html>

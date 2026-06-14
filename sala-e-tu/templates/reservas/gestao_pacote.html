@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% block title %}{{ pacote.titulo }}{% endblock %}
+{% block page_title %}Gestão do Pacote{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>🗺️ {{ pacote.titulo }}</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a> <span class="breadcrumb-sep">/</span>
+      <a href="{% url 'reservas:lista' %}">Reservas</a> <span class="breadcrumb-sep">/</span>
+      {{ pacote.titulo }}
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <a href="{% url 'reservas:lista_impressao_pacote' pacote.pk %}" target="_blank" class="btn btn-outline">
+      🖨️ Imprimir Lista Completa
+    </a>
+    <a href="{% url 'reservas:criar_para_pacote' pacote.pk %}" class="btn btn-laranja">
+      ➕ Nova Reserva neste Pacote
+    </a>
+  </div>
+</div>
+
+<!-- INFO DO PACOTE -->
+<div class="pacote-info-banner">
+  <div class="pib-item"><span class="pib-label">Destino</span><strong>{{ pacote.destino }}</strong></div>
+  <div class="pib-item"><span class="pib-label">Saída</span><strong>{{ pacote.data_saida|date:"d/m/Y" }}</strong></div>
+  <div class="pib-item"><span class="pib-label">Retorno</span><strong>{{ pacote.data_retorno|date:"d/m/Y" }}</strong></div>
+  <div class="pib-item"><span class="pib-label">Duração</span><strong>{{ pacote.duracao_dias }} dias</strong></div>
+  <div class="pib-item"><span class="pib-label">Valor/pax</span><strong>R$ {{ pacote.valor|floatformat:2 }}</strong></div>
+  <div class="pib-item"><span class="pib-label">Vagas livres</span><strong>{{ pacote.vagas_disponiveis }}</strong></div>
+</div>
+
+<!-- RESERVAS -->
+{% if reservas %}
+  {% for reserva in reservas %}
+  {% with passageiros=reserva.passageiros.all %}
+  <div class="panel" style="margin-bottom:20px;">
+
+    <!-- HEADER DA RESERVA -->
+    <div class="reserva-bloco-header">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="font-weight:700;color:var(--verde-dark);">Reserva #{{ reserva.pk }}</span>
+        <span class="badge badge-{{ reserva.status }}">{{ reserva.get_status_display }}</span>
+        {% if reserva.saldo_devedor > 0 %}
+          <span class="saldo-badge">⚠️ Falta R$ {{ reserva.saldo_devedor|floatformat:2 }}</span>
+        {% else %}
+          <span class="quitado-badge">✓ Quitado</span>
+        {% endif %}
+        {% if reserva.vendedor %}
+          <span style="font-size:.8rem;color:var(--cinza-3);">🧑‍💼 {{ reserva.vendedor.nome }}</span>
+        {% endif %}
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <a href="{% url 'pagamentos:checkout' reserva.pk %}" class="btn btn-laranja btn-sm">💳 Pagamento</a>
+        {% if reserva.status != 'cancelada' %}
+          <a href="{% url 'reservas:cancelar' reserva.pk %}"
+             class="btn btn-danger btn-sm"
+             onclick="return confirm('Cancelar reserva #{{ reserva.pk }}?')">✕ Cancelar</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- TABELA DE PASSAGEIROS -->
+    <div style="padding:0 0 4px;">
+      <table class="saleetur-table">
+        <thead>
+          <tr>
+            <th style="width:36px;">#</th>
+            <th>Nome</th>
+            <th>Documento</th>
+            <th>Telefone</th>
+            <th>Cidade</th>
+            <th style="text-align:center;">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pax in passageiros %}
+          <tr>
+            <td>
+              {{ forloop.counter }}
+              {% if pax.principal %}<span class="principal-tag">P</span>{% endif %}
+            </td>
+            <td><strong>{{ pax.cliente.nome }}</strong></td>
+            <td>{{ pax.cliente.doc_formatado }}</td>
+            <td>{{ pax.cliente.telefone }}</td>
+            <td>{{ pax.cliente.cidade|default:"—" }}</td>
+            <td>
+              <div style="display:flex;justify-content:center;gap:5px;">
+                <button class="btn btn-outline btn-sm btn-ver-pax"
+                  data-nome="{{ pax.cliente.nome }}"
+                  data-doc="{{ pax.cliente.doc_formatado }}"
+                  data-tipo="{{ pax.cliente.get_tipo_documento_display }}"
+                  data-tel="{{ pax.cliente.telefone }}"
+                  data-email="{{ pax.cliente.email|default:'—' }}"
+                  data-cidade="{{ pax.cliente.cidade|default:'—' }}"
+                  data-nasc="{{ pax.cliente.data_nascimento|date:'d/m/Y'|default:'—' }}"
+                  title="Ver dados">👁</button>
+                <a href="{% url 'clientes:editar' pax.cliente.pk %}" class="btn btn-outline btn-sm" title="Editar cliente">✏️</a>
+                {% if passageiros|length > 1 %}
+                <a href="{% url 'reservas:remover_passageiro' pax.pk %}"
+                   class="btn btn-danger btn-sm"
+                   onclick="return confirm('Remover {{ pax.cliente.nome }} desta reserva?')"
+                   title="Remover passageiro">🗑️</a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ADICIONAR PASSAGEIRO -->
+    <div style="padding:12px 16px;border-top:1px solid var(--cinza-1);">
+      <button class="btn btn-verde btn-sm"
+              onclick="abrirAddPax({{ reserva.pk }})">
+        ➕ Adicionar Passageiro a esta Reserva
+      </button>
+    </div>
+
+  </div>
+  {% endwith %}
+  {% endfor %}
+
+{% else %}
+<div class="panel"><div class="panel-body">
+  <div class="empty-state">
+    <div class="empty-icon">👥</div>
+    <p>Nenhuma reserva ativa neste pacote.<br/>
+    <a href="{% url 'reservas:criar_para_pacote' pacote.pk %}" class="btn btn-laranja" style="margin-top:14px;display:inline-flex;">Criar Reserva</a></p>
+  </div>
+</div></div>
+{% endif %}
+
+
+<!-- ── MODAL: Visualizar passageiro ── -->
+<div class="modal-overlay" id="modal-pax">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="pax-m-nome"></h3>
+      <button class="modal-close" onclick="document.getElementById('modal-pax').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-row"><span class="modal-label">Tipo de Documento</span><span id="pax-m-tipo"></span></div>
+      <div class="modal-row"><span class="modal-label">Documento</span><span id="pax-m-doc"></span></div>
+      <div class="modal-row"><span class="modal-label">Telefone</span><span id="pax-m-tel"></span></div>
+      <div class="modal-row"><span class="modal-label">E-mail</span><span id="pax-m-email"></span></div>
+      <div class="modal-row"><span class="modal-label">Cidade</span><span id="pax-m-cidade"></span></div>
+      <div class="modal-row"><span class="modal-label">Nascimento</span><span id="pax-m-nasc"></span></div>
+    </div>
+    <div style="padding:16px 24px;text-align:right;">
+      <button class="btn btn-outline" onclick="document.getElementById('modal-pax').classList.remove('open')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Adicionar passageiro ── -->
+<div class="modal-overlay" id="modal-add-pax">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>➕ Adicionar Passageiro</h3>
+      <button class="modal-close" onclick="fecharAddModal()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px;">
+      <form method="post" id="form-add-pax" action="">
+        {% csrf_token %}
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>Buscar Cliente por Nome</label>
+          <div class="cliente-search-wrap">
+            <input type="text" id="add-search" class="form-control" placeholder="Digite o nome..." autocomplete="off" />
+            <input type="hidden" name="cliente_id" id="add-cliente-id" />
+            <div class="cliente-search-results" id="add-results"></div>
+          </div>
+        </div>
+        <div id="add-selecionado" style="display:none;background:var(--verde-light);border-radius:8px;padding:10px 14px;margin-bottom:14px;">
+          <strong id="add-sel-nome"></strong>
+          <div style="font-size:.8rem;color:var(--cinza-3);margin-top:2px;">
+            <span id="add-sel-doc"></span> · <span id="add-sel-cidade"></span>
+          </div>
+          <button type="button" onclick="resetAddSearch()" class="btn btn-outline btn-sm" style="margin-top:6px;">Trocar</button>
+        </div>
+        <button type="submit" class="btn btn-verde" style="width:100%;justify-content:center;">✅ Adicionar</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CLIENTES = {{ clientes_json|safe }};
+
+// Fechar modais ao clicar fora
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// Visualizar passageiro
+document.querySelectorAll('.btn-ver-pax').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const d = this.dataset;
+    document.getElementById('pax-m-nome').textContent   = d.nome;
+    document.getElementById('pax-m-tipo').textContent   = d.tipo;
+    document.getElementById('pax-m-doc').textContent    = d.doc;
+    document.getElementById('pax-m-tel').textContent    = d.tel;
+    document.getElementById('pax-m-email').textContent  = d.email;
+    document.getElementById('pax-m-cidade').textContent = d.cidade;
+    document.getElementById('pax-m-nasc').textContent   = d.nasc;
+    document.getElementById('modal-pax').classList.add('open');
+  });
+});
+
+// Adicionar passageiro
+function abrirAddPax(reservaId) {
+  document.getElementById('form-add-pax').action = `/reservas/${reservaId}/adicionar-passageiro/`;
+  resetAddSearch();
+  document.getElementById('modal-add-pax').classList.add('open');
+}
+function fecharAddModal() {
+  document.getElementById('modal-add-pax').classList.remove('open');
+}
+
+const addSearch    = document.getElementById('add-search');
+const addResults   = document.getElementById('add-results');
+const addClienteId = document.getElementById('add-cliente-id');
+
+addSearch.addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  addResults.innerHTML = '';
+  if (!q) { addResults.classList.remove('open'); return; }
+  const filtro = CLIENTES.filter(c => c.nome.toLowerCase().includes(q)).slice(0, 8);
+  if (!filtro.length) {
+    addResults.innerHTML = '<div class="sr-vazio">Nenhum cliente encontrado</div>';
+    addResults.classList.add('open');
+    return;
+  }
+  filtro.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'sr-item';
+    item.innerHTML = `<strong>${c.nome}</strong><span>${c.documento} · ${c.cidade || '—'}</span>`;
+    item.addEventListener('click', () => {
+      addClienteId.value = c.id;
+      document.getElementById('add-sel-nome').textContent   = c.nome;
+      document.getElementById('add-sel-doc').textContent    = c.documento;
+      document.getElementById('add-sel-cidade').textContent = c.cidade || '—';
+      document.getElementById('add-selecionado').style.display = 'block';
+      addSearch.style.display = 'none';
+      addResults.innerHTML = ''; addResults.classList.remove('open');
+    });
+    addResults.appendChild(item);
+  });
+  addResults.classList.add('open');
+});
+
+function resetAddSearch() {
+  addClienteId.value = '';
+  addSearch.value = '';
+  addSearch.style.display = 'block';
+  document.getElementById('add-selecionado').style.display = 'none';
+  addResults.innerHTML = ''; addResults.classList.remove('open');
+}
+</script>
+{% endblock %}

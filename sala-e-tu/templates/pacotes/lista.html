@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Pacotes{% endblock %}
+{% block page_title %}Pacotes de Viagem{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>🗺️ Pacotes de Viagem</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a>
+      <span class="breadcrumb-sep">/</span> Pacotes
+    </div>
+  </div>
+  {% if eh_admin %}
+  <a href="{% url 'pacotes:criar' %}" class="btn btn-verde">➕ Novo Pacote</a>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <div class="panel-body">
+    {% if pacotes %}
+    <div class="table-responsive">
+      <table class="saleetur-table">
+        <thead>
+          <tr>
+            <th>Título</th>
+            <th>Destino</th>
+            <th>Saída</th>
+            <th>Retorno</th>
+            <th>Dias</th>
+            <th>Valor</th>
+            <th>Vagas</th>
+            {% if eh_admin %}<th></th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in pacotes %}
+          <tr>
+            <td><strong>{{ p.titulo }}</strong></td>
+            <td>{{ p.destino }}</td>
+            <td>{{ p.data_saida|date:"d/m/Y" }}</td>
+            <td>{{ p.data_retorno|date:"d/m/Y" }}</td>
+            <td style="text-align:center;">{{ p.duracao_dias }}d</td>
+            <td>R$ {{ p.valor|floatformat:2 }}</td>
+            <td style="text-align:center;">
+              {% if p.lotado %}
+                <span style="background:#FFEBEE;color:#C62828;padding:2px 8px;border-radius:12px;font-size:.78rem;font-weight:600;">Lotado</span>
+              {% else %}
+                <span style="color:var(--verde);font-weight:700;">{{ p.vagas_disponiveis }}</span>
+              {% endif %}
+            </td>
+            {% if eh_admin %}
+            <td style="white-space:nowrap;display:flex;gap:6px;">
+              <a href="{% url 'pacotes:editar' p.pk %}" class="btn btn-outline btn-sm">✏️</a>
+              <a href="{% url 'pacotes:excluir' p.pk %}" class="btn btn-danger btn-sm"
+                 onclick="return confirm('Desativar {{ p.titulo }}?')">🗑️</a>
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">🗺️</div>
+        <p>Nenhum pacote cadastrado.<br/>
+        {% if eh_admin %}
+        <a href="{% url 'pacotes:criar' %}" class="btn btn-verde" style="margin-top:14px;display:inline-flex;">Criar primeiro pacote</a>
+        {% endif %}
+        </p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
