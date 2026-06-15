@@ -21,6 +21,7 @@ class Pagamento(models.Model):
         ('pix', 'PIX'),
         ('dinheiro', 'Dinheiro'),
         ('cartao_credito', 'Cartão de Crédito'),
+        ('gratuito', 'Gratuito'),
     ]
     PARCELAS = [(i, f'{i}x') for i in range(1, 13)]
 

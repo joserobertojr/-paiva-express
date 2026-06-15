@@ -72,7 +72,7 @@
         <!-- FORMA -->
         <div style="margin-bottom:16px;">
           <label style="font-size:.82rem;font-weight:700;color:var(--cinza-3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:10px;">Forma de Pagamento</label>
-          <div class="payment-methods" style="grid-template-columns:repeat(3,1fr);">
+          <div class="payment-methods" style="grid-template-columns:repeat(4,1fr);">
             <div class="payment-method" data-value="pix" onclick="selPag(this)">
               <div class="pm-icon">⚡</div><div class="pm-label">PIX</div>
             </div>
@@ -82,8 +82,18 @@
             <div class="payment-method" data-value="cartao_credito" onclick="selPag(this)">
               <div class="pm-icon">💳</div><div class="pm-label">Cartão de Crédito</div>
             </div>
+            <div class="payment-method" data-value="gratuito" onclick="selPag(this)"
+                 style="border-color:#9C27B0;">
+              <div class="pm-icon">🎁</div><div class="pm-label">Gratuito</div>
+            </div>
           </div>
           <input type="hidden" name="forma" id="forma-input" />
+        </div>
+
+        <!-- AVISO GRATUITO -->
+        <div id="gratuito-aviso" style="display:none;margin-bottom:14px;padding:14px 16px;background:#F3E5F5;border-left:4px solid #9C27B0;border-radius:0 8px 8px 0;">
+          <strong style="color:#6A1B9A;">🎁 Passagem Gratuita</strong><br/>
+          <span style="font-size:.85rem;color:#7B1FA2;">A reserva será marcada como quitada sem nenhum valor financeiro registrado.</span>
         </div>
 
         <!-- BANCO PIX (só PIX) -->
@@ -186,7 +196,10 @@
             <tr>
               <td>{{ forloop.counter }}</td>
               <td>
-                {% if p.forma == 'pix' %}⚡{% elif p.forma == 'dinheiro' %}💵{% else %}💳{% endif %}
+                {% if p.forma == 'pix' %}⚡
+                {% elif p.forma == 'dinheiro' %}💵
+                {% elif p.forma == 'gratuito' %}🎁
+                {% else %}💳{% endif %}
                 {{ p.get_forma_display }}
               </td>
               <td>{{ p.banco_pix.nome|default:"—" }}</td>
@@ -268,11 +281,24 @@ function selPag(el) {
   el.classList.add('selected');
   const forma = el.dataset.value;
   document.getElementById('forma-input').value = forma;
-  const isCartao = forma === 'cartao_credito';
-  const isPix = forma === 'pix';
-  document.getElementById('parcelas-group').style.display = isCartao ? 'flex' : 'none';
-  document.getElementById('banco-pix-group').style.display = isPix ? 'flex' : 'none';
+  const isCartao  = forma === 'cartao_credito';
+  const isPix     = forma === 'pix';
+  const isGratis  = forma === 'gratuito';
+
+  document.getElementById('parcelas-group').style.display   = isCartao ? 'flex' : 'none';
+  document.getElementById('banco-pix-group').style.display  = isPix    ? 'flex' : 'none';
+  document.getElementById('gratuito-aviso').style.display   = isGratis ? 'block': 'none';
   if (!isCartao) document.getElementById('parcelas-preview').style.display = 'none';
+
+  // Esconde campos financeiros quando gratuito
+  const camposFinanceiros = ['valor-input', 'desconto-input'];
+  camposFinanceiros.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.closest('.form-group').style.display = isGratis ? 'none' : '';
+  });
+  document.getElementById('saldo-preview')?.closest('div[style]')?.style &&
+    (document.getElementById('saldo-preview').closest('[id="saldo-preview"]')?.parentElement?.style.display = isGratis ? 'none' : '');
+
   calcSaldo(document.getElementById('valor-input').value);
 }
 

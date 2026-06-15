@@ -23,7 +23,8 @@ FORMA_LABELS = {
 def checkout(request, pk):
     reserva = get_object_or_404(Reserva, pk=pk)
     pagamentos = reserva.pagamentos.select_related('vendedor', 'banco_pix').all()
-    totals = pagamentos.aggregate(s=Sum('valor'), d=Sum('desconto'))
+    pags_financeiros = pagamentos.exclude(forma='gratuito')
+    totals = pags_financeiros.aggregate(s=Sum('valor'), d=Sum('desconto'))
     total_pago = totals['s'] or Decimal('0')
     total_desconto = totals['d'] or Decimal('0')
     saldo = reserva.valor_total - total_pago - total_desconto
@@ -65,9 +66,25 @@ def checkout(request, pk):
         except InvalidOperation:
             desconto = Decimal('0')
 
-        if forma and valor > 0:
+        if forma == 'gratuito':
+            # Quita a reserva sem valor financeiro
+            Pagamento.objects.create(
+                reserva=reserva,
+                forma='gratuito',
+                valor=Decimal('0'),
+                data_pagamento=data_pagamento,
+                vendedor_id=vendedor_id,
+                observacoes=observacoes or 'Gratuito',
+            )
+            reserva.status = 'confirmada'
+            reserva.save()
+            audit_log(request, AuditLog.ACAO_CRIAR, 'Pagamentos',
+                      f'Marcou reserva #{reserva.pk} como gratuita')
+            messages.success(request, 'Reserva marcada como gratuita e confirmada!')
+
+        elif forma and valor > 0:
             valor_efetivo = min(valor, saldo)
-            pag = Pagamento.objects.create(
+            Pagamento.objects.create(
                 reserva=reserva,
                 forma=forma,
                 valor=valor_efetivo,
@@ -81,7 +98,7 @@ def checkout(request, pk):
             audit_log(request, AuditLog.ACAO_CRIAR, 'Pagamentos',
                       f'Registrou pagamento R$ {valor_efetivo:.2f} ({FORMA_LABELS.get(forma, forma)}) '
                       f'na reserva #{reserva.pk}')
-            novo = reserva.pagamentos.aggregate(s=Sum('valor'), d=Sum('desconto'))
+            novo = reserva.pagamentos.exclude(forma='gratuito').aggregate(s=Sum('valor'), d=Sum('desconto'))
             novo_total = (novo['s'] or Decimal('0')) + (novo['d'] or Decimal('0'))
             if novo_total >= reserva.valor_total:
                 reserva.status = 'confirmada'
@@ -182,7 +199,7 @@ def relatorios(request):
     data_inicio = request.GET.get('data_inicio', '')
     data_fim = request.GET.get('data_fim', '')
 
-    qs = Pagamento.objects.select_related('reserva__pacote', 'vendedor', 'banco_pix').prefetch_related(
+    qs = Pagamento.objects.exclude(forma='gratuito').select_related('reserva__pacote', 'vendedor', 'banco_pix').prefetch_related(
         'reserva__passageiros__cliente'
     )
 
