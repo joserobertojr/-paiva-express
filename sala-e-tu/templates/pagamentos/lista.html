@@ -26,8 +26,10 @@
             <th>Data</th>
             <th>Cliente</th>
             <th>Reserva</th>
-            <th>Forma de Pagamento</th>
-            <th>Vendedor Responsável</th>
+            <th>Forma</th>
+            <th>Banco</th>
+            <th>Vendedor</th>
+            <th>Desconto</th>
             <th style="text-align:right;">Valor</th>
             <th>Recibo</th>
           </tr>
@@ -63,7 +65,11 @@
                 </span>
               {% endif %}
             </td>
+            <td>{{ p.banco_pix.nome|default:"—" }}</td>
             <td>{{ p.vendedor.nome|default:"—" }}</td>
+            <td style="color:var(--laranja);">
+              {% if p.desconto %}R$ {{ p.desconto|floatformat:2 }}{% else %}—{% endif %}
+            </td>
             <td style="text-align:right;font-weight:700;color:var(--verde);font-size:.95rem;">
               R$ {{ p.valor|floatformat:2 }}
             </td>

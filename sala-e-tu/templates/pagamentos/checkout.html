@@ -278,7 +278,9 @@ function selPag(el) {
 
 function calcSaldo(raw) {
   const valor = parseFloat((raw || '0').replace(',', '.')) || 0;
-  const restante = Math.max(0, saldoTotal - valor);
+  const descontoRaw = document.getElementById('desconto-input')?.value || '0';
+  const desconto = parseFloat(descontoRaw.replace(',', '.')) || 0;
+  const restante = Math.max(0, saldoTotal - valor - desconto);
   const el = document.getElementById('saldo-preview');
   if (el) {
     el.textContent = 'R$ ' + restante.toLocaleString('pt-BR', {minimumFractionDigits:2});

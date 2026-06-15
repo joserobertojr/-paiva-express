@@ -22,10 +22,12 @@ FORMA_LABELS = {
 @login_required
 def checkout(request, pk):
     reserva = get_object_or_404(Reserva, pk=pk)
-    pagamentos = reserva.pagamentos.select_related('vendedor').all()
-    total_pago = pagamentos.aggregate(s=Sum('valor'))['s'] or Decimal('0')
-    saldo = reserva.valor_total - total_pago
-    percentual = int((total_pago / reserva.valor_total * 100)) if reserva.valor_total > 0 else 0
+    pagamentos = reserva.pagamentos.select_related('vendedor', 'banco_pix').all()
+    totals = pagamentos.aggregate(s=Sum('valor'), d=Sum('desconto'))
+    total_pago = totals['s'] or Decimal('0')
+    total_desconto = totals['d'] or Decimal('0')
+    saldo = reserva.valor_total - total_pago - total_desconto
+    percentual = int(((total_pago + total_desconto) / reserva.valor_total * 100)) if reserva.valor_total > 0 else 0
     vendedores = Vendedor.objects.filter(ativo=True)
     bancos_pix = BancoPix.objects.filter(ativo=True)
 
@@ -79,7 +81,8 @@ def checkout(request, pk):
             audit_log(request, AuditLog.ACAO_CRIAR, 'Pagamentos',
                       f'Registrou pagamento R$ {valor_efetivo:.2f} ({FORMA_LABELS.get(forma, forma)}) '
                       f'na reserva #{reserva.pk}')
-            novo_total = reserva.pagamentos.aggregate(s=Sum('valor'))['s'] or Decimal('0')
+            novo = reserva.pagamentos.aggregate(s=Sum('valor'), d=Sum('desconto'))
+            novo_total = (novo['s'] or Decimal('0')) + (novo['d'] or Decimal('0'))
             if novo_total >= reserva.valor_total:
                 reserva.status = 'confirmada'
                 reserva.save()
@@ -123,7 +126,7 @@ def recibo(request, pk):
 @login_required
 def lista(request):
     pagamentos = Pagamento.objects.select_related(
-        'reserva__pacote', 'vendedor'
+        'reserva__pacote', 'vendedor', 'banco_pix'
     ).prefetch_related(
         'reserva__passageiros__cliente'
     ).order_by('-registrado_em')
