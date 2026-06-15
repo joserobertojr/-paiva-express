@@ -22,9 +22,9 @@
   <div class="stat-card laranja">
     <div class="stat-icon">🗺️</div>
     <div class="stat-info">
-      <div class="stat-label">Pacotes Ativos</div>
+      <div class="stat-label">Excursões Ativas</div>
       <div class="stat-value">{{ total_pacotes }}</div>
-      <div class="stat-sub">pacotes disponíveis</div>
+      <div class="stat-sub">excursões disponíveis</div>
     </div>
   </div>
   <div class="stat-card verde-mid">
@@ -110,8 +110,8 @@
       {% else %}
         <div class="empty-state">
           <div class="empty-icon">🗺️</div>
-          <p>Nenhum pacote cadastrado.<br/>
-          <a href="{% url 'pacotes:criar' %}" class="btn btn-verde" style="margin-top:14px;display:inline-flex;">Criar pacote</a></p>
+          <p>Nenhuma excursão cadastrada.<br/>
+          <a href="{% url 'pacotes:criar' %}" class="btn btn-verde" style="margin-top:14px;display:inline-flex;">Criar excursão</a></p>
         </div>
       {% endif %}
     </div>

@@ -1,18 +1,18 @@
 {% extends 'base.html' %}
-{% block title %}Pacotes{% endblock %}
-{% block page_title %}Pacotes de Viagem{% endblock %}
+{% block title %}Excursões{% endblock %}
+{% block page_title %}Excursões{% endblock %}
 {% block content %}
 
 <div class="page-header">
   <div class="page-header-left">
-    <h1>🗺️ Pacotes de Viagem</h1>
+    <h1>🗺️ Excursões</h1>
     <div class="breadcrumb">
       <a href="{% url 'core:dashboard' %}">Dashboard</a>
-      <span class="breadcrumb-sep">/</span> Pacotes
+      <span class="breadcrumb-sep">/</span> Excursões
     </div>
   </div>
   {% if eh_admin %}
-  <a href="{% url 'pacotes:criar' %}" class="btn btn-verde">➕ Novo Pacote</a>
+  <a href="{% url 'pacotes:criar' %}" class="btn btn-verde">➕ Nova Excursão</a>
   {% endif %}
 </div>
 
@@ -64,9 +64,9 @@
     {% else %}
       <div class="empty-state">
         <div class="empty-icon">🗺️</div>
-        <p>Nenhum pacote cadastrado.<br/>
+        <p>Nenhuma excursão cadastrada.<br/>
         {% if eh_admin %}
-        <a href="{% url 'pacotes:criar' %}" class="btn btn-verde" style="margin-top:14px;display:inline-flex;">Criar primeiro pacote</a>
+        <a href="{% url 'pacotes:criar' %}" class="btn btn-verde" style="margin-top:14px;display:inline-flex;">Criar primeira excursão</a>
         {% endif %}
         </p>
       </div>

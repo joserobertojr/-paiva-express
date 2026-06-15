@@ -26,9 +26,9 @@
         </div>
         <div class="form-grid">
           <div class="form-group full">
-            <label>Pacote</label>
+            <label>Excursão</label>
             <select name="pacote" class="form-control" required id="sel-pacote">
-              <option value="">— Selecione um pacote —</option>
+              <option value="">— Selecione uma excursão —</option>
               {% for p in pacotes %}
               <option value="{{ p.pk }}" data-valor="{{ p.valor }}" data-destino="{{ p.destino }}"
                       data-saida="{{ p.data_saida|date:'d/m/Y' }}" data-retorno="{{ p.data_retorno|date:'d/m/Y' }}"

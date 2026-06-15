@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load widget_tweaks %}
 {% block title %}{{ titulo }}{% endblock %}
-{% block page_title %}Pacotes{% endblock %}
+{% block page_title %}Excursões{% endblock %}
 
 {% block content %}
 <div class="page-header">
@@ -10,7 +10,7 @@
     <div class="breadcrumb">
       <a href="{% url 'core:dashboard' %}">Dashboard</a>
       <span class="breadcrumb-sep">/</span>
-      <a href="{% url 'pacotes:lista' %}">Pacotes</a>
+      <a href="{% url 'pacotes:lista' %}">Excursões</a>
       <span class="breadcrumb-sep">/</span> {{ titulo }}
     </div>
   </div>
@@ -21,7 +21,7 @@
     <div class="form-header-icon">🌍</div>
     <div>
       <div class="form-title">{{ titulo }}</div>
-      <div class="form-subtitle">Configure o pacote de viagem</div>
+      <div class="form-subtitle">Configure a excursão</div>
     </div>
   </div>
 
@@ -98,7 +98,7 @@
     </div>
 
     <div class="form-actions">
-      <button type="submit" class="btn btn-verde">💾 Salvar Pacote</button>
+      <button type="submit" class="btn btn-verde">💾 Salvar Excursão</button>
       <a href="{% url 'pacotes:lista' %}" class="btn btn-outline">Cancelar</a>
     </div>
   </form>

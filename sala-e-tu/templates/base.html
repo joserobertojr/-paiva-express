@@ -58,7 +58,7 @@
         {% endif %}
         {% if user_perms.pacotes %}
         <li class="nav-item {% if 'pacotes' in request.path %}active{% endif %}">
-          <a href="{% url 'pacotes:lista' %}"><span class="nav-icon">🗺️</span> Pacotes</a>
+          <a href="{% url 'pacotes:lista' %}"><span class="nav-icon">🗺️</span> Excursões</a>
         </li>
         {% endif %}
         {% if user_perms.relatorios %}
