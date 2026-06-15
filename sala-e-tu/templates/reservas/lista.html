@@ -11,15 +11,29 @@
 
 <!-- BUSCA POR CLIENTE -->
 <form method="get" style="margin-bottom:20px;">
+  {% if not q %}<input type="hidden" name="ano" value="{{ ano_sel }}" />{% endif %}
   <div style="display:flex;gap:10px;max-width:480px;">
     <input type="text" name="q" value="{{ q }}" class="form-control"
            placeholder="Buscar cliente por nome..." autocomplete="off" />
     <button type="submit" class="btn btn-verde" style="white-space:nowrap;">🔍 Buscar</button>
     {% if q %}
-    <a href="{% url 'reservas:lista' %}" class="btn btn-outline">✕</a>
+    <a href="{% url 'reservas:lista' %}?ano={{ ano_sel }}" class="btn btn-outline">✕</a>
     {% endif %}
   </div>
 </form>
+
+<!-- ABAS DE ANO -->
+{% if not q and anos %}
+<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;">
+  {% for ano in anos %}
+  <a href="?ano={{ ano }}"
+     style="padding:6px 18px;border-radius:20px;font-size:.88rem;font-weight:700;text-decoration:none;
+            {% if ano == ano_sel %}background:var(--verde);color:#fff;{% else %}background:var(--cinza-1);color:var(--cinza-3);{% endif %}">
+    {{ ano }}
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
 
 {% if q %}
   <!-- RESULTADO DA BUSCA -->

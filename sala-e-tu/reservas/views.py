@@ -9,6 +9,8 @@ from pacotes.models import Pacote
 from vendedores.models import Vendedor
 from .models import Reserva, PassageiroReserva
 
+ANO_ATUAL = timezone.now().year
+
 
 def _clientes_json():
     return json.dumps(list(
@@ -42,8 +44,26 @@ def lista(request):
             clientes_map[cid]['reservas'].append(pax.reserva)
         resultados_busca = list(clientes_map.values())
 
+    # Anos disponíveis (excursões com reservas ativas)
+    anos_disponiveis = sorted(
+        Pacote.objects.filter(
+            reservas__status__in=['pendente', 'confirmada', 'concluida']
+        ).dates('data_saida', 'year'),
+        reverse=True,
+    )
+    anos = [d.year for d in anos_disponiveis]
+
+    try:
+        ano_sel = int(request.GET.get('ano', ANO_ATUAL))
+    except (ValueError, TypeError):
+        ano_sel = ANO_ATUAL
+
+    if anos and ano_sel not in anos:
+        ano_sel = anos[0]
+
     pacotes = Pacote.objects.filter(
-        reservas__status__in=['pendente', 'confirmada', 'concluida']
+        reservas__status__in=['pendente', 'confirmada', 'concluida'],
+        data_saida__year=ano_sel,
     ).distinct().order_by('data_saida').prefetch_related(
         Prefetch('reservas',
                  queryset=Reserva.objects.exclude(status='cancelada').prefetch_related('passageiros'))
@@ -52,6 +72,8 @@ def lista(request):
         'pacotes': pacotes,
         'q': q,
         'resultados_busca': resultados_busca,
+        'anos': anos,
+        'ano_sel': ano_sel,
     })
 
 
