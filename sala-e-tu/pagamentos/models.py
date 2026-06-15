@@ -36,6 +36,7 @@ class Pagamento(models.Model):
         'vendedores.Vendedor', on_delete=models.SET_NULL,
         null=True, blank=True, related_name='pagamentos_recebidos', verbose_name='Vendedor Responsável'
     )
+    desconto = models.DecimalField('Desconto (R$)', max_digits=10, decimal_places=2, default=0)
     observacoes = models.TextField('Observações', blank=True)
     data_pagamento = models.DateField('Data do Pagamento', default=datetime.date.today)
     registrado_em = models.DateTimeField(auto_now_add=True)

@@ -56,6 +56,12 @@ def checkout(request, pk):
 
         vendedor_id = request.POST.get('vendedor') or None
         observacoes = request.POST.get('observacoes', '')
+        try:
+            desconto = Decimal(request.POST.get('desconto', '0').replace(',', '.'))
+            if desconto < 0:
+                desconto = Decimal('0')
+        except InvalidOperation:
+            desconto = Decimal('0')
 
         if forma and valor > 0:
             valor_efetivo = min(valor, saldo)
@@ -68,6 +74,7 @@ def checkout(request, pk):
                 vendedor_id=vendedor_id,
                 observacoes=observacoes,
                 data_pagamento=data_pagamento,
+                desconto=desconto,
             )
             audit_log(request, AuditLog.ACAO_CRIAR, 'Pagamentos',
                       f'Registrou pagamento R$ {valor_efetivo:.2f} ({FORMA_LABELS.get(forma, forma)}) '

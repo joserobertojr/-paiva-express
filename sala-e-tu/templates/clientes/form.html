@@ -64,6 +64,12 @@
       </div>
 
       <div class="form-group">
+        <label>Validade do Passaporte</label>
+        {% render_field form.validade_passaporte class="form-control" %}
+        {{ form.validade_passaporte.errors }}
+      </div>
+
+      <div class="form-group">
         <label>Data de Nascimento</label>
         {% render_field form.data_nascimento class="form-control" %}
         {{ form.data_nascimento.errors }}

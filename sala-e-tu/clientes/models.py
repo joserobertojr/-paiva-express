@@ -6,6 +6,7 @@ class Cliente(models.Model):
     telefone = models.CharField('Telefone', max_length=20, blank=True)
     cpf = models.CharField('CPF', max_length=20, blank=True, default='')
     passaporte = models.CharField('Passaporte', max_length=30, blank=True, default='')
+    validade_passaporte = models.DateField('Validade do Passaporte', null=True, blank=True)
     data_nascimento = models.DateField('Data de Nascimento', null=True, blank=True)
     email = models.EmailField('E-mail', blank=True)
     cidade = models.CharField('Cidade', max_length=80, blank=True)

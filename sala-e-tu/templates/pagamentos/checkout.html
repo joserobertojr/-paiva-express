@@ -151,6 +151,13 @@
           <input type="date" name="data_pagamento" class="form-control" value="{{ hoje }}" required />
         </div>
 
+        <!-- DESCONTO -->
+        <div class="form-group" style="margin-bottom:14px;">
+          <label>Desconto (R$)</label>
+          <input type="text" name="desconto" id="desconto-input" class="form-control"
+                 placeholder="0,00" value="0,00" oninput="calcSaldo(document.getElementById('valor-input').value)" autocomplete="off" />
+        </div>
+
         <div class="form-group" style="margin-bottom:16px;">
           <label>Observação</label>
           <input type="text" name="observacoes" class="form-control" placeholder="Opcional" />
@@ -172,7 +179,7 @@
       <div class="panel-body">
         <table class="saleetur-table">
           <thead>
-            <tr><th>#</th><th>Forma</th><th>Banco/Parcelas</th><th>Vendedor</th><th>Valor</th><th>Data</th><th>Recibo</th></tr>
+            <tr><th>#</th><th>Forma</th><th>Banco</th><th>Parcelas</th><th>Vendedor</th><th>Desconto</th><th>Valor</th><th>Data</th><th>Recibo</th></tr>
           </thead>
           <tbody>
             {% for p in pagamentos %}
@@ -182,12 +189,14 @@
                 {% if p.forma == 'pix' %}⚡{% elif p.forma == 'dinheiro' %}💵{% else %}💳{% endif %}
                 {{ p.get_forma_display }}
               </td>
+              <td>{{ p.banco_pix.nome|default:"—" }}</td>
               <td style="text-align:center;">
-                {% if p.forma == 'cartao_credito' %}{{ p.parcelas|default:1 }}x
-                {% elif p.forma == 'pix' %}{{ p.banco_pix.nome|default:"—" }}
-                {% else %}—{% endif %}
+                {% if p.forma == 'cartao_credito' %}{{ p.parcelas|default:1 }}x{% else %}—{% endif %}
               </td>
               <td>{{ p.vendedor.nome|default:"—" }}</td>
+              <td style="color:var(--laranja);">
+                {% if p.desconto %}R$ {{ p.desconto|floatformat:2 }}{% else %}—{% endif %}
+              </td>
               <td><strong style="color:var(--verde);">R$ {{ p.valor|floatformat:2 }}</strong></td>
               <td style="font-size:.8rem;color:var(--cinza-3);">{{ p.data_pagamento|date:"d/m/Y" }}</td>
               <td>

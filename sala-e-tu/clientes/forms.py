@@ -5,9 +5,10 @@ from .models import Cliente
 class ClienteForm(forms.ModelForm):
     class Meta:
         model = Cliente
-        fields = ['nome', 'telefone', 'cpf', 'passaporte', 'data_nascimento', 'email', 'cidade']
+        fields = ['nome', 'telefone', 'cpf', 'passaporte', 'validade_passaporte', 'data_nascimento', 'email', 'cidade']
         widgets = {
             'data_nascimento': forms.DateInput(attrs={'type': 'date'}),
+            'validade_passaporte': forms.DateInput(attrs={'type': 'date'}),
         }
 
     def clean(self):
