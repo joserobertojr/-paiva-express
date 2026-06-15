@@ -12,7 +12,8 @@ from .models import Reserva, PassageiroReserva
 
 def _clientes_json():
     return json.dumps(list(
-        Cliente.objects.filter(ativo=True).values('id', 'nome', 'documento', 'cidade', 'telefone')
+        [{'id': c.id, 'nome': c.nome, 'documento': c.doc_formatado, 'cidade': c.cidade, 'telefone': c.telefone}
+         for c in Cliente.objects.filter(ativo=True)]
     ))
 
 
