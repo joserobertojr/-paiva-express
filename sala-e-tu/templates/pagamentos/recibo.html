@@ -140,6 +140,12 @@
       <td><strong>Valor Recebido</strong></td>
       <td><span class="valor-destaque">R$ {{ pagamento.valor|floatformat:2 }}</span></td>
     </tr>
+    {% if pagamento.desconto %}
+    <tr>
+      <td><strong>Desconto Concedido</strong></td>
+      <td style="color:#1B5E20;font-weight:700;">R$ {{ pagamento.desconto|floatformat:2 }}</td>
+    </tr>
+    {% endif %}
     {% if reserva.saldo_devedor > 0 %}
     <tr>
       <td><strong>Saldo Devedor</strong></td>
