@@ -131,57 +131,29 @@ MESES_PT = {
 
 @login_required
 def lista(request):
-    hoje = datetime.date.today()
-
     # Anos disponíveis
     anos = sorted(
         {p.year for p in Pagamento.objects.dates('data_pagamento', 'year')},
         reverse=True,
     )
-    try:
-        ano_sel = int(request.GET.get('ano', hoje.year))
-    except (ValueError, TypeError):
-        ano_sel = hoje.year
-    if anos and ano_sel not in anos:
-        ano_sel = anos[0]
 
-    # Meses disponíveis no ano selecionado
-    meses_disponiveis = sorted(
-        {p.month for p in Pagamento.objects.filter(
-            data_pagamento__year=ano_sel
-        ).dates('data_pagamento', 'month')}
-    )
-    try:
-        mes_sel = int(request.GET.get('mes', 0))
-    except (ValueError, TypeError):
-        mes_sel = 0
-    if mes_sel and mes_sel not in meses_disponiveis:
-        mes_sel = 0
+    def _int(val, default=0):
+        try:
+            return int(val)
+        except (ValueError, TypeError):
+            return default
 
-    # Dias disponíveis no mês selecionado
-    dias_disponiveis = []
-    try:
-        dia_sel = int(request.GET.get('dia', 0))
-    except (ValueError, TypeError):
-        dia_sel = 0
-
-    if mes_sel:
-        dias_disponiveis = sorted(
-            {p.day for p in Pagamento.objects.filter(
-                data_pagamento__year=ano_sel,
-                data_pagamento__month=mes_sel,
-            ).dates('data_pagamento', 'day')}
-        )
-        if dia_sel and dia_sel not in dias_disponiveis:
-            dia_sel = 0
+    ano_sel = _int(request.GET.get('ano'), 0)
+    mes_sel = _int(request.GET.get('mes'), 0)
+    dia_sel = _int(request.GET.get('dia'), 0)
 
     # Queryset filtrado
     qs = Pagamento.objects.select_related(
         'reserva__pacote', 'vendedor', 'banco_pix'
-    ).prefetch_related(
-        'reserva__passageiros__cliente'
-    ).filter(data_pagamento__year=ano_sel)
+    ).prefetch_related('reserva__passageiros__cliente')
 
+    if ano_sel:
+        qs = qs.filter(data_pagamento__year=ano_sel)
     if mes_sel:
         qs = qs.filter(data_pagamento__month=mes_sel)
     if dia_sel:
@@ -196,12 +168,11 @@ def lista(request):
         'pagamentos': qs,
         'anos': anos,
         'ano_sel': ano_sel,
-        'meses': [(m, MESES_PT[m]) for m in meses_disponiveis],
         'mes_sel': mes_sel,
-        'dias': dias_disponiveis,
         'dia_sel': dia_sel,
         'total': total,
-        'MESES_PT': MESES_PT,
+        'meses_lista': list(MESES_PT.items()),
+        'dias': range(1, 32),
     })
 
 

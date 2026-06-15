@@ -17,68 +17,55 @@
 </div>
 
 <!-- FILTROS ANO / MÊS / DIA -->
-{% if anos %}
-<div style="margin-bottom:12px;">
-  <div style="font-size:.75rem;font-weight:700;color:var(--cinza-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Ano</div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;">
-    {% for ano in anos %}
-    <a href="?ano={{ ano }}"
-       style="padding:5px 16px;border-radius:20px;font-size:.85rem;font-weight:700;text-decoration:none;
-              {% if ano == ano_sel %}background:var(--verde);color:#fff;{% else %}background:var(--cinza-1);color:var(--cinza-3);{% endif %}">
-      {{ ano }}
-    </a>
-    {% endfor %}
-  </div>
-</div>
+<form method="get" style="margin-bottom:16px;">
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
 
-{% if meses %}
-<div style="margin-bottom:12px;">
-  <div style="font-size:.75rem;font-weight:700;color:var(--cinza-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Mês</div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;">
-    <a href="?ano={{ ano_sel }}"
-       style="padding:5px 14px;border-radius:20px;font-size:.82rem;font-weight:600;text-decoration:none;
-              {% if not mes_sel %}background:var(--laranja);color:#fff;{% else %}background:var(--cinza-1);color:var(--cinza-3);{% endif %}">
-      Todos
-    </a>
-    {% for m, nome in meses %}
-    <a href="?ano={{ ano_sel }}&mes={{ m }}"
-       style="padding:5px 14px;border-radius:20px;font-size:.82rem;font-weight:600;text-decoration:none;
-              {% if m == mes_sel %}background:var(--laranja);color:#fff;{% else %}background:var(--cinza-1);color:var(--cinza-3);{% endif %}">
-      {{ nome }}
-    </a>
-    {% endfor %}
-  </div>
-</div>
-{% endif %}
+    <div>
+      <label style="font-size:.75rem;font-weight:700;color:var(--cinza-3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;">Ano</label>
+      <select name="ano" class="form-control" style="width:110px;">
+        <option value="">Todos</option>
+        {% for ano in anos %}
+        <option value="{{ ano }}" {% if ano == ano_sel %}selected{% endif %}>{{ ano }}</option>
+        {% endfor %}
+      </select>
+    </div>
 
-{% if dias and mes_sel %}
-<div style="margin-bottom:16px;">
-  <div style="font-size:.75rem;font-weight:700;color:var(--cinza-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Dia</div>
-  <div style="display:flex;gap:6px;flex-wrap:wrap;">
-    <a href="?ano={{ ano_sel }}&mes={{ mes_sel }}"
-       style="padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:600;text-decoration:none;
-              {% if not dia_sel %}background:var(--verde-dark);color:#fff;{% else %}background:var(--cinza-1);color:var(--cinza-3);{% endif %}">
-      Todos
-    </a>
-    {% for d in dias %}
-    <a href="?ano={{ ano_sel }}&mes={{ mes_sel }}&dia={{ d }}"
-       style="padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:600;text-decoration:none;
-              {% if d == dia_sel %}background:var(--verde-dark);color:#fff;{% else %}background:var(--cinza-1);color:var(--cinza-3);{% endif %}">
-      {{ d }}
-    </a>
-    {% endfor %}
+    <div>
+      <label style="font-size:.75rem;font-weight:700;color:var(--cinza-3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;">Mês</label>
+      <select name="mes" class="form-control" style="width:150px;">
+        <option value="">Todos</option>
+        {% for m in meses_lista %}
+        <option value="{{ m.0 }}" {% if m.0 == mes_sel %}selected{% endif %}>{{ m.1 }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label style="font-size:.75rem;font-weight:700;color:var(--cinza-3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px;">Dia</label>
+      <select name="dia" class="form-control" style="width:100px;">
+        <option value="">Todos</option>
+        {% for d in dias %}
+        <option value="{{ d }}" {% if d == dia_sel %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-verde">🔍 Filtrar</button>
+    {% if ano_sel or mes_sel or dia_sel %}
+    <a href="{% url 'pagamentos:lista' %}" class="btn btn-outline">✕ Limpar</a>
+    {% endif %}
+
   </div>
-</div>
-{% endif %}
+</form>
 
 <!-- TOTAL DO PERÍODO -->
 <div style="margin-bottom:16px;padding:10px 16px;background:var(--verde-light);border-radius:8px;display:flex;justify-content:space-between;align-items:center;">
   <span style="font-size:.85rem;color:var(--verde-dark);font-weight:600;">
-    Total do período — {{ pagamentos|length }} transaç{{ pagamentos|length|pluralize:"ão,ões" }}
+    {{ pagamentos|length }} transaç{{ pagamentos|length|pluralize:"ão,ões" }}
+    {% if ano_sel or mes_sel or dia_sel %} no período selecionado{% endif %}
   </span>
   <strong style="font-size:1.05rem;color:var(--verde-dark);">R$ {{ total|floatformat:2 }}</strong>
 </div>
-{% endif %}
 
 <div class="panel">
   <div class="panel-body">
