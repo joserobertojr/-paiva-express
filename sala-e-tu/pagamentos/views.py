@@ -139,7 +139,7 @@ def relatorios(request):
     data_inicio = request.GET.get('data_inicio', '')
     data_fim = request.GET.get('data_fim', '')
 
-    qs = Pagamento.objects.select_related('reserva__pacote', 'vendedor').prefetch_related(
+    qs = Pagamento.objects.select_related('reserva__pacote', 'vendedor', 'banco_pix').prefetch_related(
         'reserva__passageiros__cliente'
     )
 

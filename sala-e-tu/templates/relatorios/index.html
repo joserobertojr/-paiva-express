@@ -127,6 +127,7 @@
             <th>Cliente</th>
             <th>Reserva</th>
             <th>Forma</th>
+            <th>Banco</th>
             <th>Vendedor</th>
             <th style="text-align:right;">Valor</th>
           </tr>
@@ -158,6 +159,7 @@
                 </span>
               {% endif %}
             </td>
+            <td>{{ p.banco_pix.nome|default:"—" }}</td>
             <td>{{ p.vendedor.nome|default:"—" }}</td>
             <td style="text-align:right;font-weight:700;color:var(--verde);">R$ {{ p.valor|floatformat:2 }}</td>
           </tr>
@@ -166,7 +168,7 @@
         </tbody>
         <tfoot>
           <tr style="background:var(--verde-light);">
-            <td colspan="5" style="font-weight:700;padding:10px 12px;">Total</td>
+            <td colspan="6" style="font-weight:700;padding:10px 12px;">Total</td>
             <td style="text-align:right;font-weight:800;color:var(--verde);font-size:1.05rem;padding:10px 12px;">
               R$ {{ total_geral|floatformat:2 }}
             </td>
