@@ -36,7 +36,6 @@
 
     /* Acompanhante: indentado */
     .tr-acomp td { background: #FAFAFA; color: #333; }
-    .tr-acomp .num-col { color: transparent; }
     .td-acomp-nome {
       padding-left: 32px !important;
       color: #444;
@@ -167,6 +166,14 @@
   </div>
 </div>
 
-<script>window.addEventListener('load', () => window.print());</script>
+<script>
+  // Numera todos os passageiros sequencialmente (ignora linhas separadoras)
+  let n = 1;
+  document.querySelectorAll('tbody tr:not(.tr-sep) .num-col').forEach(cel => {
+    cel.textContent = n++;
+    cel.style.color = '#1B5E20';
+  });
+  window.addEventListener('load', () => window.print());
+</script>
 </body>
 </html>
