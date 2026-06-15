@@ -21,13 +21,38 @@ def _clientes_json():
 
 @login_required
 def lista(request):
+    q = request.GET.get('q', '').strip()
+    resultados_busca = None
+
+    if q:
+        # Busca passageiros cujo nome contém q, trazendo a reserva e pacote
+        passagens = PassageiroReserva.objects.filter(
+            cliente__nome__icontains=q,
+            reserva__status__in=['pendente', 'confirmada', 'concluida'],
+        ).select_related('cliente', 'reserva__pacote').order_by(
+            'cliente__nome', 'reserva__pacote__data_saida'
+        )
+
+        # Agrupa por cliente
+        clientes_map = {}
+        for pax in passagens:
+            cid = pax.cliente.id
+            if cid not in clientes_map:
+                clientes_map[cid] = {'cliente': pax.cliente, 'reservas': []}
+            clientes_map[cid]['reservas'].append(pax.reserva)
+        resultados_busca = list(clientes_map.values())
+
     pacotes = Pacote.objects.filter(
         reservas__status__in=['pendente', 'confirmada', 'concluida']
     ).distinct().order_by('data_saida').prefetch_related(
         Prefetch('reservas',
                  queryset=Reserva.objects.exclude(status='cancelada').prefetch_related('passageiros'))
     )
-    return render(request, 'reservas/lista.html', {'pacotes': pacotes})
+    return render(request, 'reservas/lista.html', {
+        'pacotes': pacotes,
+        'q': q,
+        'resultados_busca': resultados_busca,
+    })
 
 
 # ── Gestão do pacote: página dedicada ────────────────────────────────────────

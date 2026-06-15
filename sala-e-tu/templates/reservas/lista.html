@@ -9,7 +9,74 @@
   </div>
 </div>
 
-<p style="color:var(--cinza-3);margin-bottom:20px;font-size:.92rem;">Selecione uma excursão para gerenciar passageiros e pagamentos.</p>
+<!-- BUSCA POR CLIENTE -->
+<form method="get" style="margin-bottom:20px;">
+  <div style="display:flex;gap:10px;max-width:480px;">
+    <input type="text" name="q" value="{{ q }}" class="form-control"
+           placeholder="Buscar cliente por nome..." autocomplete="off" />
+    <button type="submit" class="btn btn-verde" style="white-space:nowrap;">🔍 Buscar</button>
+    {% if q %}
+    <a href="{% url 'reservas:lista' %}" class="btn btn-outline">✕</a>
+    {% endif %}
+  </div>
+</form>
+
+{% if q %}
+  <!-- RESULTADO DA BUSCA -->
+  {% if resultados_busca %}
+    <p style="font-size:.85rem;color:var(--cinza-3);margin-bottom:14px;">
+      {{ resultados_busca|length }} cliente{{ resultados_busca|length|pluralize }} encontrado{{ resultados_busca|length|pluralize }} para "<strong>{{ q }}</strong>"
+    </p>
+    {% for item in resultados_busca %}
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="panel-header">
+        <div class="panel-title">
+          <span class="dot"></span>
+          👤 {{ item.cliente.nome }}
+          <span style="font-size:.78rem;color:var(--cinza-3);font-weight:400;margin-left:8px;">{{ item.cliente.doc_formatado }}</span>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        <table class="saleetur-table">
+          <thead>
+            <tr><th>Excursão</th><th>Destino</th><th>Saída</th><th>Situação</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for reserva in item.reservas %}
+            <tr>
+              <td><strong>{{ reserva.pacote.titulo }}</strong></td>
+              <td>{{ reserva.pacote.destino }}</td>
+              <td style="white-space:nowrap;">{{ reserva.pacote.data_saida|date:"d/m/Y" }}</td>
+              <td>
+                {% if reserva.status == 'confirmada' %}
+                  <span style="background:#E8F5E9;color:#1B5E20;padding:2px 8px;border-radius:12px;font-size:.78rem;font-weight:600;">Confirmada</span>
+                {% elif reserva.status == 'pendente' %}
+                  <span style="background:#FFF8E1;color:#F57C00;padding:2px 8px;border-radius:12px;font-size:.78rem;font-weight:600;">Pendente</span>
+                {% else %}
+                  <span style="background:#EDE7F6;color:#4527A0;padding:2px 8px;border-radius:12px;font-size:.78rem;font-weight:600;">{{ reserva.get_status_display }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'reservas:gestao_pacote' reserva.pacote.pk %}" class="btn btn-outline btn-sm">Ver excursão →</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="panel"><div class="panel-body">
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <p>Nenhum cliente encontrado com o nome "<strong>{{ q }}</strong>".</p>
+      </div>
+    </div></div>
+  {% endif %}
+
+{% else %}
+  <p style="color:var(--cinza-3);margin-bottom:20px;font-size:.92rem;">Selecione uma excursão para gerenciar passageiros e pagamentos.</p>
 
 {% if pacotes %}
 <div class="pacote-sel-grid">
@@ -46,4 +113,6 @@
   </div>
 </div></div>
 {% endif %}
+
+{% endif %}{# fecha {% if q %} #}
 {% endblock %}
