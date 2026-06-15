@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Boss Barbearia — Portal do Cliente{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --bb: #0a0a0a; --by: #FFD700; --byd: #c9a800; --bw: #fff; --bg: #f8f9fa; --border: #e9ecef; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Open Sans', sans-serif; background: var(--bg); color: #333; margin: 0; }
+
+    /* NAVBAR */
+    .client-nav {
+      background: var(--bb);
+      padding: .75rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    }
+    .client-nav .brand { font-family: 'Oswald', sans-serif; color: var(--by); font-size: 1.2rem; font-weight: 700; text-decoration: none; letter-spacing: 1px; }
+    .client-nav .brand span { color: rgba(255,255,255,.5); font-size: .65rem; letter-spacing: 3px; display: block; text-transform: uppercase; font-family: 'Open Sans', sans-serif; font-weight: 300; }
+    .client-nav .nav-actions { display: flex; align-items: center; gap: 1rem; }
+    .nav-link-client { color: rgba(255,255,255,.65); text-decoration: none; font-size: .85rem; transition: color .2s; padding: .3rem .1rem; border-bottom: 2px solid transparent; }
+    .nav-link-client:hover, .nav-link-client.active { color: var(--by); border-bottom-color: var(--by); }
+    .btn-nav-logout { background: rgba(255,255,255,.1); color: rgba(255,255,255,.7); border: none; border-radius: 6px; padding: .35rem .75rem; font-size: .8rem; cursor: pointer; transition: background .2s; }
+    .btn-nav-logout:hover { background: rgba(255,255,255,.2); color: #fff; }
+
+    /* CONTENT */
+    .client-content { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem; }
+
+    /* CARDS */
+    .c-card { background: var(--bw); border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,.04); overflow: hidden; }
+    .c-card-header { padding: .9rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .c-card-title { font-family: 'Oswald', sans-serif; font-size: 1rem; font-weight: 600; color: var(--bb); margin: 0; }
+    .c-card-body { padding: 1.25rem; }
+
+    /* BUTTONS */
+    .btn-boss { background: var(--by); color: #000; border: none; font-weight: 700; font-family: 'Oswald', sans-serif; transition: all .2s; }
+    .btn-boss:hover { background: var(--byd); color: #000; }
+    .btn-boss-outline { border: 2px solid var(--by); color: var(--bb); background: transparent; font-weight: 600; }
+    .btn-boss-outline:hover { background: var(--by); color: #000; }
+
+    /* BADGES */
+    .badge-status { border-radius: 20px; font-size: .7rem; padding: .3rem .7rem; font-weight: 600; }
+    .s-agendado { background: #e3f2fd; color: #1565c0; }
+    .s-confirmado { background: #e8f5e9; color: #2e7d32; }
+    .s-concluido { background: #0a0a0a; color: #FFD700; }
+    .s-cancelado { background: #fce4ec; color: #b71c1c; }
+    .s-faltou { background: #f3e5f5; color: #6a1b9a; }
+    .s-em_atendimento { background: #fff8e1; color: #e65100; }
+
+    /* FORM */
+    .form-label { font-weight: 600; font-size: .83rem; color: #444; }
+    .form-control:focus, .form-select:focus { border-color: var(--by); box-shadow: 0 0 0 .2rem rgba(255,215,0,.2); }
+
+    /* MESSAGES */
+    .alert { border: none; border-radius: 8px; font-size: .875rem; }
+
+    /* MOBILE MENU */
+    .hamburger { display: none; background: none; border: none; color: rgba(255,255,255,.8); font-size: 1.2rem; cursor: pointer; }
+    @media (max-width: 600px) {
+      .hamburger { display: block; }
+      .nav-links { display: none; flex-direction: column; position: absolute; top: 56px; left: 0; right: 0; background: #0a0a0a; padding: .5rem 1.5rem 1rem; gap: .75rem; }
+      .nav-links.open { display: flex; }
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<nav class="client-nav">
+  <a href="{% url 'barbearia:cliente_dashboard' %}" class="brand">
+    <span>✂ BOSS</span>
+    <span>Portal do Cliente</span>
+  </a>
+  <button class="hamburger" onclick="document.getElementById('nav-links').classList.toggle('open')">
+    <i class="fas fa-bars"></i>
+  </button>
+  <div class="nav-actions nav-links" id="nav-links">
+    <a href="{% url 'barbearia:cliente_dashboard' %}" class="nav-link-client {% if request.resolver_match.url_name == 'cliente_dashboard' %}active{% endif %}">
+      <i class="fas fa-home me-1"></i>Início
+    </a>
+    <a href="{% url 'barbearia:cliente_agendar' %}" class="nav-link-client {% if request.resolver_match.url_name == 'cliente_agendar' %}active{% endif %}">
+      <i class="fas fa-calendar-plus me-1"></i>Agendar
+    </a>
+    <a href="{% url 'barbearia:cliente_meus_agendamentos' %}" class="nav-link-client {% if 'meus_agendamentos' in request.resolver_match.url_name %}active{% endif %}">
+      <i class="fas fa-calendar-check me-1"></i>Meus Agendamentos
+    </a>
+    <a href="{% url 'barbearia:cliente_planos' %}" class="nav-link-client {% if request.resolver_match.url_name == 'cliente_planos' %}active{% endif %}">
+      <i class="fas fa-medal me-1"></i>Planos
+    </a>
+    <a href="{% url 'barbearia:cliente_perfil' %}" class="nav-link-client {% if request.resolver_match.url_name == 'cliente_perfil' %}active{% endif %}">
+      <i class="fas fa-user me-1"></i>Perfil
+    </a>
+    <form method="post" action="{% url 'barbearia:cliente_logout' %}" class="d-inline m-0 p-0">
+      {% csrf_token %}
+      <button type="submit" class="btn-nav-logout"><i class="fas fa-sign-out-alt me-1"></i>Sair</button>
+    </form>
+  </div>
+</nav>
+
+<div class="client-content">
+  {% if messages %}
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show mb-3" role="alert">
+      {{ msg }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+  {% endif %}
+  {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  setTimeout(() => document.querySelectorAll('.alert').forEach(a => bootstrap.Alert.getOrCreateInstance(a)?.close()), 5000);
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

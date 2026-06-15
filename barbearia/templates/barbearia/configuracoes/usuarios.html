@@ -1,0 +1,106 @@
+{% extends 'barbearia/base.html' %}
+{% block title %}Configurações — Boss Barbearia{% endblock %}
+{% block page_title %}Configurações — Usuários{% endblock %}
+
+{% block extra_css %}
+<style>
+  .perm-badge { display:inline-block; font-size:.62rem; font-weight:700; padding:.18rem .5rem; border-radius:10px; text-transform:uppercase; letter-spacing:.5px; margin:1px; }
+  .perm-master { background:#0a0a0a; color:#FFD700; }
+  .perm-on { background:#e8f5e9; color:#2e7d32; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="sec-header mb-3">
+  <h2 class="sec-title"><i class="fas fa-users-cog me-2" style="color:var(--by);"></i>Usuários do Sistema</h2>
+  <a href="{% url 'barbearia:configuracoes_novo_usuario' %}" class="btn btn-boss btn-sm">
+    <i class="fas fa-user-plus me-1"></i>Novo Usuário
+  </a>
+</div>
+
+<div class="boss-card mb-3" style="border-left:4px solid var(--by);">
+  <div class="boss-card-body py-2" style="font-size:.82rem;color:#666;">
+    <i class="fas fa-info-circle me-1" style="color:var(--by);"></i>
+    Logins do <strong>sistema administrativo</strong>. Barbeiros são cadastrados em
+    <a href="{% url 'barbearia:barbeiros' %}">Barbeiros</a>.
+    Clientes do portal têm acesso próprio.
+  </div>
+</div>
+
+<div class="boss-table">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Login</th>
+        <th>Status</th>
+        <th>Permissões</th>
+        <th class="text-end">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in usuarios %}
+      <tr>
+        <td>
+          <div class="d-flex align-items-center gap-2">
+            <div style="width:32px;height:32px;border-radius:50%;background:#0a0a0a;color:#FFD700;display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-weight:700;font-size:.9rem;flex-shrink:0;">
+              {{ u.username|first|upper }}
+            </div>
+            <strong>{{ u.username }}</strong>
+            {% if u == request.user %}
+              <span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:.62rem;">Você</span>
+            {% endif %}
+          </div>
+        </td>
+        <td>
+          {% if u.is_active %}
+            <span class="badge-status s-confirmado">Ativo</span>
+          {% else %}
+            <span class="badge-status s-cancelado">Inativo</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if u.permissao.master %}
+            <span class="perm-badge perm-master"><i class="fas fa-crown me-1"></i>Master</span>
+          {% else %}
+            {% for acesso in u.permissao.lista_acessos %}
+              {% for campo, label, _ in funcionalidades %}
+                {% if campo == acesso %}
+                  <span class="perm-badge perm-on">{{ label }}</span>
+                {% endif %}
+              {% endfor %}
+            {% empty %}
+              <span style="color:#bbb;font-size:.8rem;">Sem permissões</span>
+            {% endfor %}
+          {% endif %}
+        </td>
+        <td class="text-end">
+          <div class="d-flex gap-1 justify-content-end">
+            <a href="{% url 'barbearia:configuracoes_editar_usuario' u.pk %}" class="btn btn-sm btn-outline-secondary">
+              <i class="fas fa-pen"></i>
+            </a>
+            {% if u != request.user %}
+            <form method="post" action="{% url 'barbearia:configuracoes_excluir_usuario' u.pk %}"
+                  onsubmit="return confirm('Excluir {{ u.username }}? O acesso será revogado.')">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm" style="background:#fce4ec;color:#b71c1c;border:none;">
+                <i class="fas fa-trash"></i>
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4" class="text-center text-muted py-4">
+          Nenhum usuário cadastrado.<br>
+          <a href="{% url 'barbearia:configuracoes_novo_usuario' %}" class="btn btn-boss btn-sm mt-2">
+            <i class="fas fa-user-plus me-1"></i>Criar Primeiro Usuário
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

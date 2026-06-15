@@ -1,0 +1,156 @@
+{% extends 'barbearia/base.html' %}
+{% load barbearia_extras %}
+{% block title %}{{ titulo }} — Boss Barbearia{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .perm-card {
+    border: 1px solid #e2e5ea; border-radius: 10px; overflow: hidden;
+  }
+  .perm-card-header {
+    background: #0a0a0a; color: #FFD700;
+    font-family: 'Oswald', sans-serif; font-size: .85rem; font-weight: 600;
+    padding: .65rem 1rem; letter-spacing: .5px;
+  }
+  .perm-item {
+    display: flex; align-items: flex-start; gap: .75rem;
+    padding: .75rem 1rem; border-bottom: 1px solid #f5f5f5; transition: background .15s;
+  }
+  .perm-item:last-child { border-bottom: none; }
+  .perm-item:hover { background: #fafafa; }
+  .perm-item.master-row { background: rgba(255,215,0,.06); }
+  .perm-item input[type="checkbox"] { margin-top: 3px; flex-shrink: 0; width: 17px; height: 17px; cursor: pointer; }
+  .perm-label { font-weight: 700; font-size: .88rem; color: #222; display: block; }
+  .perm-desc { font-size: .75rem; color: #888; }
+  .perm-item.master-row .perm-label { color: #0a0a0a; }
+  .perm-item.master-row .perm-desc { color: #666; }
+  input#id_master:checked ~ .perm-label { color: #c9a800; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="boss-card">
+      <div class="boss-card-header">
+        <span class="boss-card-title">
+          <i class="fas fa-user-cog me-2" style="color:var(--by);"></i>{{ titulo }}
+        </span>
+        <a href="{% url 'barbearia:configuracoes_usuarios' %}" class="btn btn-sm btn-boss-outline">
+          <i class="fas fa-arrow-left me-1"></i> Voltar
+        </a>
+      </div>
+      <div class="boss-card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <!-- LOGIN (só na criação) -->
+          {% if form.username %}
+          <div class="mb-3">
+            <label class="form-label">Login <span class="text-danger">*</span></label>
+            {{ form.username }}
+            {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>{% endif %}
+            <small class="text-muted">Usado para entrar no sistema. Não pode ser alterado depois.</small>
+          </div>
+          {% else %}
+          <!-- Edição: mostrar username como readonly -->
+          {% if usuario %}
+          <div class="mb-3">
+            <label class="form-label">Login</label>
+            <input type="text" class="form-control" value="{{ usuario.username }}" disabled>
+          </div>
+          {% endif %}
+          {% endif %}
+
+          <!-- SENHA -->
+          {% if form.password %}
+          <div class="mb-3">
+            <label class="form-label">Senha <span class="text-danger">*</span></label>
+            {{ form.password }}
+            {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>{% endif %}
+          </div>
+          {% endif %}
+
+          {% if form.nova_senha %}
+          <div class="mb-3">
+            <label class="form-label">{{ form.nova_senha.label }}</label>
+            {{ form.nova_senha }}
+            {% if form.nova_senha.errors %}<div class="text-danger small mt-1">{{ form.nova_senha.errors.0 }}</div>{% endif %}
+          </div>
+          {% endif %}
+
+          <!-- ATIVO (só na edição) -->
+          {% if form.ativo %}
+          <div class="mb-4">
+            <div class="form-check">
+              {{ form.ativo }}
+              <label class="form-check-label fw-semibold">{{ form.ativo.label }}</label>
+            </div>
+            <small class="text-muted">Usuários inativos não conseguem fazer login.</small>
+          </div>
+          {% endif %}
+
+          <!-- PERMISSÕES -->
+          <div class="mb-4">
+            <label class="form-label d-block mb-2">Nível de Acesso</label>
+            <div class="perm-card">
+              <div class="perm-card-header"><i class="fas fa-shield-alt me-2"></i>Funcionalidades Permitidas</div>
+
+              {% for campo, label, descricao in funcionalidades %}
+              {% with field=form|lookup:campo %}
+              <div class="perm-item {% if campo == 'master' %}master-row{% endif %}" id="row-{{ campo }}">
+                {{ field }}
+                <div>
+                  <span class="perm-label">
+                    {% if campo == 'master' %}<i class="fas fa-crown me-1" style="color:#c9a800;"></i>{% endif %}
+                    {{ label }}
+                  </span>
+                  <span class="perm-desc">{{ descricao }}</span>
+                </div>
+              </div>
+              {% endwith %}
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2">
+            <a href="{% url 'barbearia:configuracoes_usuarios' %}" class="btn btn-boss-outline">Cancelar</a>
+            <button type="submit" class="btn btn-boss">
+              <i class="fas fa-save me-1"></i>
+              {% if usuario %}Salvar Alterações{% else %}Criar Usuário{% endif %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const masterChk = document.getElementById('id_master');
+
+const allPerms = [
+  {% for campo, label, _ in funcionalidades %}{% if campo != 'master' %}'{{ campo }}',{% endif %}{% endfor %}
+];
+
+function toggleMaster() {
+  const isMaster = masterChk.checked;
+  allPerms.forEach(function(campo) {
+    const chk = document.getElementById('id_' + campo);
+    if (chk) {
+      chk.checked = isMaster ? true : chk.checked;
+      chk.disabled = isMaster;
+    }
+  });
+}
+
+if (masterChk) {
+  masterChk.addEventListener('change', toggleMaster);
+  // Run on page load in case master is pre-checked
+  toggleMaster();
+}
+</script>
+{% endblock %}

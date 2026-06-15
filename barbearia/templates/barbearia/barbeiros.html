@@ -1,0 +1,82 @@
+{% extends 'barbearia/base.html' %}
+{% block title %}Barbeiros — Boss Barbearia{% endblock %}
+{% block page_title %}Equipe de Barbeiros{% endblock %}
+
+{% block content %}
+<div class="sec-header mb-3">
+  <h2 class="sec-title">Equipe</h2>
+  <a href="{% url 'barbearia:cadastrar_barbeiro' %}" class="btn btn-boss btn-sm">
+    <i class="fas fa-plus me-1"></i> Cadastrar Barbeiro
+  </a>
+</div>
+
+<div class="row g-3">
+  {% for b in barbeiros %}
+  <div class="col-md-4">
+    <div class="boss-card p-0">
+      <div style="background:#0a0a0a;border-radius:12px 12px 0 0;padding:1.5rem;text-align:center;">
+        {% if b.foto_perfil %}
+          <img src="{{ b.foto_perfil.url }}" alt="{{ b.nome }}"
+               style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid #FFD700;margin:0 auto .75rem;display:block;">
+        {% else %}
+        <div style="width:72px;height:72px;border-radius:50%;background:#FFD700;display:flex;align-items:center;justify-content:center;font-weight:700;color:#000;font-family:'Oswald',sans-serif;font-size:1.6rem;margin:0 auto .75rem;">
+          {{ b.nome|first|upper }}
+        </div>
+        {% endif %}
+        <h5 style="font-family:'Oswald',sans-serif;color:#fff;margin:0;font-size:1.1rem;">{{ b.nome }}</h5>
+        <small style="color:rgba(255,215,0,.7);font-size:.7rem;letter-spacing:1px;text-transform:uppercase;">
+          Barbeiro {% if not b.ativo %}<span style="color:#f44;">(Inativo)</span>{% endif %}
+        </small>
+      </div>
+      <div class="p-3">
+        {% if b.whatsapp %}
+        <div class="d-flex align-items-center gap-2 mb-2" style="font-size:.85rem;">
+          <i class="fab fa-whatsapp" style="color:#25D366;"></i>
+          <a href="{{ b.link_whatsapp }}" target="_blank" style="color:#333;text-decoration:none;">{{ b.whatsapp }}</a>
+        </div>
+        {% endif %}
+        {% if b.data_nascimento %}
+        <div class="d-flex align-items-center gap-2 mb-2" style="font-size:.85rem;">
+          <i class="fas fa-birthday-cake" style="color:#aaa;"></i>
+          <span>{{ b.data_nascimento|date:"d/m/Y" }}</span>
+        </div>
+        {% endif %}
+        <hr style="border-color:#f0f0f0;">
+        <div class="row text-center g-0 mb-3">
+          <div class="col">
+            <div style="font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;color:#0a0a0a;">{{ b.total_geral|default:0 }}</div>
+            <div style="font-size:.7rem;color:#999;text-transform:uppercase;letter-spacing:.5px;">Atendimentos</div>
+          </div>
+          <div class="col" style="border-left:1px solid #f0f0f0;">
+            <div style="font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;color:#0a0a0a;">R$ {{ b.fat_total|default:0|floatformat:0 }}</div>
+            <div style="font-size:.7rem;color:#999;text-transform:uppercase;letter-spacing:.5px;">Faturado Total</div>
+          </div>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{% url 'barbearia:editar_barbeiro' b.pk %}" class="btn btn-boss-outline btn-sm flex-fill">
+            <i class="fas fa-edit me-1"></i> Editar / Grade
+          </a>
+          <form action="{% url 'barbearia:excluir_barbeiro' b.pk %}" method="post"
+                onsubmit="return confirm('Remover {{ b.nome }}? Esta ação não pode ser desfeita.')">
+            {% csrf_token %}
+            <button class="btn btn-sm" style="background:#fce4ec;color:#b71c1c;border:none;" type="submit">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <div class="boss-card text-center py-5">
+      <i class="fas fa-cut fa-3x mb-3" style="color:#ddd;"></i>
+      <h5 style="color:#aaa;">Nenhum barbeiro cadastrado.</h5>
+      <a href="{% url 'barbearia:cadastrar_barbeiro' %}" class="btn btn-boss mt-2">
+        <i class="fas fa-plus me-1"></i> Cadastrar Primeiro Barbeiro
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

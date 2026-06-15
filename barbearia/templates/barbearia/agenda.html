@@ -1,0 +1,227 @@
+{% extends 'barbearia/base.html' %}
+{% block title %}Agenda — Boss Barbearia{% endblock %}
+{% block page_title %}Agenda{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+<style>
+  .fc .fc-toolbar-title { font-family: 'Oswald', sans-serif; font-size: 1.1rem; }
+  .fc .fc-button-primary { background: #0a0a0a; border-color: #0a0a0a; }
+  .fc .fc-button-primary:not(:disabled).fc-button-active,
+  .fc .fc-button-primary:not(:disabled):active { background: #FFD700; border-color: #c9a800; color: #000; }
+  .fc .fc-button-primary:hover { background: #222; border-color: #222; }
+  .fc .fc-day-today { background: rgba(255,215,0,.06) !important; }
+  .fc-event { cursor: pointer; font-size: .78rem; }
+  #event-popup {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    z-index: 9999; width: 340px; display: none;
+  }
+  #event-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 9998; display: none;
+  }
+  .nav-tabs .nav-link { font-family: 'Oswald', sans-serif; font-size: .9rem; color: #666; }
+  .nav-tabs .nav-link.active { color: #0a0a0a; border-bottom: 2px solid #FFD700; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- TOOLBAR -->
+<form method="get" id="filter-form" class="boss-card p-3 mb-3">
+  <div class="row g-2 align-items-end">
+    <div class="col-12 col-md-auto d-flex align-items-center gap-2">
+      <a href="?data={{ data_anterior }}" class="btn btn-outline-secondary btn-sm px-2"><i class="fas fa-chevron-left"></i></a>
+      <input type="date" name="data" id="data-input" value="{{ data_selecionada|date:'Y-m-d' }}" class="form-control form-control-sm" style="width:145px;">
+      <a href="?data={{ data_proxima }}" class="btn btn-outline-secondary btn-sm px-2"><i class="fas fa-chevron-right"></i></a>
+      <a href="?data={% now 'Y-m-d' %}" class="btn btn-outline-dark btn-sm">Hoje</a>
+    </div>
+    <div class="col-6 col-md-auto">
+      <select name="barbeiro" id="barbeiro-filter" class="form-select form-select-sm" onchange="refreshCalendar()">
+        <option value="">Todos os barbeiros</option>
+        {% for b in barbeiros %}
+        <option value="{{ b.pk }}" {% if barbeiro_filtro == b.pk|stringformat:'s' %}selected{% endif %}>{{ b.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-6 col-md-auto">
+      <select name="status" class="form-select form-select-sm">
+        <option value="">Todos os status</option>
+        {% for val, label in status_choices %}
+        <option value="{{ val }}" {% if status_filtro == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-sm btn-boss"><i class="fas fa-filter me-1"></i>Filtrar lista</button>
+    </div>
+    <div class="col-auto ms-md-auto d-flex gap-1">
+      <a href="{% url 'barbearia:novo_agendamento' %}" class="btn btn-sm btn-boss"><i class="fas fa-plus me-1"></i>Novo Agendamento</a>
+      <a href="{% url 'barbearia:bloquear_horario' %}" class="btn btn-sm btn-outline-dark"><i class="fas fa-lock me-1"></i>Bloquear</a>
+    </div>
+  </div>
+</form>
+
+<!-- TABS: CALENDAR / LIST -->
+<ul class="nav nav-tabs mb-3" id="agendaTabs">
+  <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-calendario"><i class="fas fa-calendar me-1"></i>Calendário</a></li>
+  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-lista"><i class="fas fa-list me-1"></i>Lista do Dia</a></li>
+</ul>
+
+<div class="tab-content">
+  <!-- FULLCALENDAR TAB -->
+  <div class="tab-pane fade show active" id="tab-calendario">
+    <div class="boss-card p-3">
+      <div id="calendar"></div>
+    </div>
+  </div>
+
+  <!-- LIST TAB -->
+  <div class="tab-pane fade" id="tab-lista">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <h5 style="font-family:'Oswald',sans-serif;margin:0;">{{ data_selecionada|date:"l, d \d\e F" }}</h5>
+      <span class="badge" style="background:#FFD700;color:#000;">{{ agendamentos.count }} agendamento{{ agendamentos.count|pluralize:"s" }}</span>
+    </div>
+
+    {% if horarios_bloqueados %}
+    <div class="alert" style="background:#1a1a1a;color:#FFD700;border:1px solid rgba(255,215,0,.3);border-radius:8px;font-size:.84rem;margin-bottom:1rem;">
+      <i class="fas fa-lock me-2"></i>
+      {% for h in horarios_bloqueados %}
+      <strong>{{ h.barbeiro.nome }}</strong> bloqueado {{ h.data_inicio|time:"H:i" }}–{{ h.data_fim|time:"H:i" }}{% if h.motivo %} ({{ h.motivo }}){% endif %}
+      <form method="post" action="{% url 'barbearia:excluir_bloqueio' h.pk %}" class="d-inline ms-1">{% csrf_token %}<button type="submit" class="btn btn-sm" style="background:rgba(255,80,80,.2);color:#ff6b6b;padding:1px 5px;font-size:.7rem;" onclick="return confirm('Remover bloqueio?')"><i class="fas fa-times"></i></button></form>
+      {% if not forloop.last %} &nbsp;|&nbsp; {% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if agendamentos %}
+    <div class="boss-table">
+      <table class="table table-hover">
+        <thead>
+          <tr><th>Horário</th><th>Cliente</th><th>Serviço</th><th>Barbeiro</th><th>Valor</th><th>Status</th><th>Ações</th></tr>
+        </thead>
+        <tbody>
+          {% for ag in agendamentos %}
+          <tr>
+            <td><strong>{{ ag.data_hora|time:"H:i" }}</strong></td>
+            <td><div style="font-weight:600;">{{ ag.cliente.nome }}</div><div style="font-size:.75rem;color:#999;">{{ ag.cliente.telefone }}</div></td>
+            <td>{{ ag.servico.nome|default:"—" }}</td>
+            <td style="font-size:.85rem;">{{ ag.barbeiro.nome|default:"—" }}</td>
+            <td><strong>R$ {{ ag.valor_cobrado|default:ag.servico.preco|floatformat:2 }}</strong></td>
+            <td><span class="badge-status s-{{ ag.status }}">{{ ag.get_status_display }}</span></td>
+            <td>
+              <a href="{{ ag.gerar_link_whatsapp }}" target="_blank" class="btn btn-sm btn-wa"><i class="fab fa-whatsapp me-1"></i>WhatsApp</a>
+              <div class="dropdown d-inline-block ms-1">
+                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" style="font-size:.75rem;padding:.25rem .5rem;">Status</button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size:.82rem;">
+                  {% for val, label in status_choices %}
+                  <li><a class="dropdown-item {% if ag.status == val %}fw-bold{% endif %}" href="{% url 'barbearia:alterar_status' ag.pk val %}">{% if ag.status == val %}<i class="fas fa-check me-2" style="color:#FFD700;"></i>{% else %}<span class="me-4"></span>{% endif %}{{ label }}</a></li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <a href="{% url 'barbearia:editar_agendamento' ag.pk %}" class="btn btn-sm btn-outline-secondary ms-1"><i class="fas fa-pen"></i></a>
+              <form method="post" action="{% url 'barbearia:excluir_agendamento' ag.pk %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-danger ms-1" onclick="return confirm('Excluir agendamento de {{ ag.cliente.nome }}?')"><i class="fas fa-trash"></i></button></form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="boss-card text-center py-5">
+      <i class="fas fa-calendar-xmark fa-3x mb-3" style="color:#ddd;"></i>
+      <h5 style="color:#aaa;">Nenhum agendamento neste dia.</h5>
+      <a href="{% url 'barbearia:novo_agendamento' %}" class="btn btn-boss mt-2"><i class="fas fa-plus me-1"></i>Criar Agendamento</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- EVENT POPUP OVERLAY -->
+<div id="event-overlay" onclick="closePopup()"></div>
+<div id="event-popup">
+  <div style="background:#0a0a0a;border-radius:12px 12px 0 0;padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-family:'Oswald',sans-serif;color:#FFD700;font-size:1rem;">Agendamento</span>
+    <button onclick="closePopup()" style="background:none;border:none;color:rgba(255,255,255,.6);font-size:1.1rem;cursor:pointer;"><i class="fas fa-times"></i></button>
+  </div>
+  <div style="padding:1.25rem;">
+    <div id="popup-cliente" style="font-size:1.1rem;font-weight:700;margin-bottom:.25rem;"></div>
+    <div id="popup-servico" style="font-size:.85rem;color:#666;margin-bottom:.75rem;"></div>
+    <div class="row g-2 mb-3">
+      <div class="col-6"><div style="font-size:.7rem;color:#999;text-transform:uppercase;letter-spacing:.5px;">Barbeiro</div><div id="popup-barbeiro" style="font-size:.88rem;font-weight:600;"></div></div>
+      <div class="col-6"><div style="font-size:.7rem;color:#999;text-transform:uppercase;letter-spacing:.5px;">Valor</div><div id="popup-valor" style="font-size:.88rem;font-weight:600;color:#2e7d32;"></div></div>
+    </div>
+    <div id="popup-status-badge" class="mb-3"></div>
+    <div class="d-flex gap-2">
+      <a id="popup-wa" href="#" target="_blank" class="btn btn-sm btn-wa flex-fill"><i class="fab fa-whatsapp me-1"></i>WhatsApp</a>
+      <a id="popup-editar" href="#" class="btn btn-sm btn-boss flex-fill"><i class="fas fa-pen me-1"></i>Editar</a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales/pt-br.global.min.js"></script>
+<script>
+const API_EVENTOS = "{% url 'barbearia:api_eventos' %}";
+
+let calendar;
+
+document.addEventListener('DOMContentLoaded', function() {
+  calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+    locale: 'pt-br',
+    initialView: 'timeGridWeek',
+    initialDate: '{{ data_selecionada|date:"Y-m-d" }}',
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay',
+    },
+    slotMinTime: '08:00:00',
+    slotMaxTime: '20:00:00',
+    height: 620,
+    nowIndicator: true,
+    events: function(info, success, failure) {
+      const barb = document.getElementById('barbeiro-filter').value;
+      fetch(`${API_EVENTOS}?start=${info.startStr}&end=${info.endStr}&barbeiro=${barb}`)
+        .then(r => r.json())
+        .then(success)
+        .catch(failure);
+    },
+    eventClick: function(info) {
+      info.jsEvent.preventDefault();
+      const p = info.event.extendedProps;
+      document.getElementById('popup-cliente').textContent = p.cliente;
+      document.getElementById('popup-servico').textContent = p.servico || 'Serviço não informado';
+      document.getElementById('popup-barbeiro').textContent = p.barbeiro || '—';
+      document.getElementById('popup-valor').textContent = p.valor ? `R$ ${p.valor}` : '—';
+      document.getElementById('popup-status-badge').innerHTML = `<span class="badge-status" style="background:#e3f2fd;color:#1565c0;border-radius:20px;padding:.3rem .7rem;font-size:.75rem;font-weight:600;">${p.status}</span>`;
+      document.getElementById('popup-wa').href = p.whatsapp;
+      document.getElementById('popup-editar').href = p.editar_url;
+      document.getElementById('event-overlay').style.display = 'block';
+      document.getElementById('event-popup').style.display = 'block';
+    },
+    eventMouseEnter: function(info) {
+      info.el.style.opacity = '.85';
+    },
+    eventMouseLeave: function(info) {
+      info.el.style.opacity = '1';
+    },
+  });
+  calendar.render();
+});
+
+function refreshCalendar() {
+  if (calendar) calendar.refetchEvents();
+}
+
+function closePopup() {
+  document.getElementById('event-overlay').style.display = 'none';
+  document.getElementById('event-popup').style.display = 'none';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopup(); });
+</script>
+{% endblock %}

@@ -5,6 +5,8 @@ from django.conf.urls.static import static
 from rh import views
 
 urlpatterns = [
+    path('barbearia/', include('barbearia.urls', namespace='barbearia')),
+
     path('admin/', admin.site.urls),
     path('contas/', include('django.contrib.auth.urls')),
     

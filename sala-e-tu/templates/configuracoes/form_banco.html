@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block page_title %}Configurações{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>🏦 {{ titulo }}</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a>
+      <span class="breadcrumb-sep">/</span>
+      <a href="{% url 'core:configuracoes' %}">Configurações</a>
+      <span class="breadcrumb-sep">/</span> {{ titulo }}
+    </div>
+  </div>
+</div>
+
+<div style="max-width:420px;">
+  <div class="form-card">
+    <div class="form-header">
+      <div class="form-header-icon">🏦</div>
+      <div>
+        <div class="form-title">{{ titulo }}</div>
+        <div class="form-subtitle">Nome do banco para recebimento via PIX</div>
+      </div>
+    </div>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="form-grid" style="padding:0 20px 16px;">
+        <div class="form-group full">
+          <label>Nome do Banco <span style="color:var(--laranja);">*</span></label>
+          <input type="text" name="nome" class="form-control" required
+                 value="{{ banco.nome|default:'' }}" placeholder="Ex: Nubank, Caixa, Bradesco..." />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-verde">💾 Salvar</button>
+        <a href="{% url 'core:configuracoes' %}" class="btn btn-outline">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

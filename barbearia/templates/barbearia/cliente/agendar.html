@@ -1,0 +1,304 @@
+{% extends 'barbearia/cliente/base.html' %}
+{% block title %}Agendar — Boss Barbearia{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── STEPS ── */
+  .step-header { display:flex; align-items:center; gap:.6rem; margin-bottom:1rem; }
+  .step-badge {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:28px; height:28px; border-radius:50%;
+    background:#FFD700; color:#000; font-weight:700; font-size:.8rem;
+    font-family:'Oswald',sans-serif; flex-shrink:0;
+  }
+  .step-title { font-family:'Oswald',sans-serif; font-size:1rem; font-weight:600; color:#0a0a0a; }
+
+  /* ── SELETOR DE DIA ── */
+  .day-strip {
+    display:flex; gap:.5rem; overflow-x:auto; padding-bottom:.4rem;
+    scrollbar-width:thin; scrollbar-color:#e0e0e0 transparent;
+  }
+  .day-strip::-webkit-scrollbar { height:4px; }
+  .day-strip::-webkit-scrollbar-thumb { background:#e0e0e0; border-radius:2px; }
+
+  .day-btn {
+    flex:0 0 auto; min-width:72px; padding:.75rem .5rem;
+    border:2px solid #e9ecef; border-radius:12px;
+    background:#fff; text-align:center; cursor:pointer;
+    transition:all .18s; outline:none;
+  }
+  .day-btn:hover:not(:disabled) { border-color:#FFD700; background:#fffde7; }
+  .day-btn.selected { background:#0a0a0a; border-color:#0a0a0a; color:#FFD700; }
+  .day-btn:disabled { opacity:.4; cursor:not-allowed; }
+  .day-name { display:block; font-size:.62rem; text-transform:uppercase; letter-spacing:1px; opacity:.7; }
+  .day-num  { display:block; font-family:'Oswald',sans-serif; font-size:1.5rem; line-height:1.15; }
+  .day-mes  { display:block; font-size:.62rem; opacity:.6; }
+  .day-btn.selected .day-name,
+  .day-btn.selected .day-mes  { opacity:.65; }
+
+  /* ── GRADE DE HORÁRIOS ── */
+  .slots-grid { display:flex; flex-wrap:wrap; gap:.45rem; }
+  .slot-btn {
+    padding:.45rem .9rem;
+    border:2px solid #e9ecef; border-radius:8px;
+    background:#fff; font-family:'Oswald',sans-serif;
+    font-size:.95rem; font-weight:600; color:#0a0a0a;
+    cursor:pointer; transition:all .15s; outline:none;
+  }
+  .slot-btn:hover { border-color:#FFD700; background:#fffde7; }
+  .slot-btn.selected { background:#FFD700; border-color:#c9a800; color:#000; }
+
+  /* ── CONFIRM ── */
+  .slot-selecionado {
+    background:linear-gradient(135deg,#FFD700,#c9a800);
+    border-radius:10px; padding:1rem 1.25rem;
+    display:flex; align-items:center; gap:1rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h4 style="font-family:'Oswald',sans-serif;margin-bottom:1.25rem;">
+  <i class="fas fa-calendar-plus me-2" style="color:#FFD700;"></i>Novo Agendamento
+</h4>
+
+{% if form.non_field_errors %}
+<div class="alert alert-danger">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>
+{% endif %}
+
+<form method="post" id="booking-form">
+  {% csrf_token %}
+  {{ form.data_hora }}  {# campo hidden preenchido pelo JS #}
+
+  <!-- PASSO 1: Serviço + Barbeiro -->
+  <div class="c-card mb-3">
+    <div class="c-card-body">
+      <div class="step-header">
+        <span class="step-badge">1</span>
+        <span class="step-title">Escolha o Serviço e o Barbeiro</span>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Serviço *</label>
+          <select name="servico" id="svc-select" class="form-select" required>
+            <option value="">— Selecione um serviço —</option>
+            {% for s in servicos_lista %}
+            <option value="{{ s.pk }}" data-preco="{{ s.preco }}" data-duracao="{{ s.duracao_minutos }}">
+              {{ s.nome }} — R$ {{ s.preco|floatformat:2 }} ({{ s.duracao_minutos }}min)
+            </option>
+            {% endfor %}
+          </select>
+          <small id="svc-info" class="text-muted mt-1 d-block" style="font-size:.75rem;"></small>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Barbeiro *</label>
+          <select name="barbeiro" id="barb-select" class="form-select" required>
+            <option value="">— Selecione um barbeiro —</option>
+            {% for b in barbeiros_lista %}
+            <option value="{{ b.pk }}">{{ b.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASSO 2: Escolha do Dia -->
+  <div class="c-card mb-3" id="step-dia" style="display:none;">
+    <div class="c-card-body">
+      <div class="step-header">
+        <span class="step-badge">2</span>
+        <span class="step-title">Escolha o Dia</span>
+      </div>
+      <div class="day-strip" id="day-strip"></div>
+    </div>
+  </div>
+
+  <!-- PASSO 3: Horários disponíveis -->
+  <div class="c-card mb-3" id="step-hora" style="display:none;">
+    <div class="c-card-body">
+      <div class="step-header">
+        <span class="step-badge">3</span>
+        <span class="step-title">Escolha o Horário</span>
+      </div>
+      <div id="slots-grid" class="slots-grid"></div>
+    </div>
+  </div>
+
+  <!-- PASSO 4: Confirmar -->
+  <div class="c-card mb-3" id="confirm-section" style="display:none;">
+    <div class="c-card-body">
+      <div class="step-header">
+        <span class="step-badge">4</span>
+        <span class="step-title">Confirmar Agendamento</span>
+      </div>
+
+      <div class="slot-selecionado mb-3">
+        <i class="fas fa-check-circle fa-2x" style="color:#000;"></i>
+        <div>
+          <div style="font-family:'Oswald',sans-serif;font-size:1rem;font-weight:700;color:#000;">Horário selecionado:</div>
+          <div id="slot-text" style="font-size:.95rem;color:#333;font-weight:600;"></div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Observações (opcional)</label>
+        <textarea name="observacoes" class="form-control" rows="2"
+                  placeholder="Preferências, alergias, informações adicionais..."></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-boss px-4 btn-lg w-100">
+        <i class="fas fa-calendar-check me-2"></i>CONFIRMAR AGENDAMENTO
+      </button>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const API_HORARIOS = "{% url 'barbearia:api_horarios' %}";
+const DIAS  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+/* ── Gera os 7 botões de dia ── */
+function gerarStrip() {
+  const strip = document.getElementById('day-strip');
+  strip.innerHTML = '';
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(hoje);
+    d.setDate(hoje.getDate() + i);
+    const yyyy = d.getFullYear();
+    const mm   = String(d.getMonth()+1).padStart(2,'0');
+    const dd   = String(d.getDate()).padStart(2,'0');
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'day-btn';
+    btn.dataset.date = dateStr;
+    btn.innerHTML = `
+      <span class="day-name">${DIAS[d.getDay()]}</span>
+      <span class="day-num">${d.getDate()}</span>
+      <span class="day-mes">${MESES[d.getMonth()]}</span>
+    `;
+    btn.addEventListener('click', () => selecionarDia(btn, dateStr));
+    strip.appendChild(btn);
+  }
+}
+
+/* ── Seleciona um dia e carrega slots ── */
+function selecionarDia(btn, dateStr) {
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+
+  // reseta horário e confirmação
+  document.getElementById('id_data_hora').value = '';
+  document.getElementById('confirm-section').style.display = 'none';
+
+  carregarSlots(dateStr);
+}
+
+/* ── Busca horários via API ── */
+async function carregarSlots(dateStr) {
+  const svcId  = document.getElementById('svc-select').value;
+  const barbId = document.getElementById('barb-select').value;
+  const grid   = document.getElementById('slots-grid');
+
+  document.getElementById('step-hora').style.display = 'block';
+  grid.innerHTML = '<span class="text-muted" style="font-size:.85rem;"><i class="fas fa-spinner fa-spin me-1"></i>Carregando horários…</span>';
+
+  try {
+    const url = `${API_HORARIOS}?start=${dateStr}&end=${dateStr}&servico=${svcId}&barbeiro=${barbId}`;
+    const slots = await fetch(url).then(r => r.json());
+
+    if (!slots.length) {
+      grid.innerHTML = '<span class="text-muted" style="font-size:.88rem;"><i class="fas fa-calendar-xmark me-1"></i>Nenhum horário disponível neste dia.</span>';
+      return;
+    }
+
+    grid.innerHTML = '';
+    slots.forEach(slot => {
+      const dt   = new Date(slot.start);
+      const hora = dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+      const btn  = document.createElement('button');
+      btn.type      = 'button';
+      btn.className = 'slot-btn';
+      btn.textContent = hora;
+      btn.dataset.slot = slot.extendedProps.slot;
+      btn.addEventListener('click', () => selecionarSlot(btn, slot));
+      grid.appendChild(btn);
+    });
+  } catch(e) {
+    grid.innerHTML = '<span class="text-danger" style="font-size:.85rem;">Erro ao carregar horários. Tente novamente.</span>';
+  }
+}
+
+/* ── Seleciona um horário ── */
+function selecionarSlot(btn, slot) {
+  document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+
+  document.getElementById('id_data_hora').value = slot.extendedProps.slot;
+
+  const dt  = new Date(slot.start);
+  const fmt = dt.toLocaleString('pt-BR', {weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit'});
+  document.getElementById('slot-text').textContent = fmt;
+
+  const sec = document.getElementById('confirm-section');
+  sec.style.display = 'block';
+  sec.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+/* ── Mostra/oculta os passos conforme seleção ── */
+function atualizarPassos() {
+  const svcId  = document.getElementById('svc-select').value;
+  const barbId = document.getElementById('barb-select').value;
+  const stepDia = document.getElementById('step-dia');
+
+  if (svcId && barbId) {
+    stepDia.style.display = 'block';
+  } else {
+    stepDia.style.display = 'none';
+    document.getElementById('step-hora').style.display = 'none';
+    document.getElementById('confirm-section').style.display = 'none';
+  }
+
+  // reseta seleção de dia e horário quando serviço/barbeiro mudar
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('id_data_hora').value = '';
+  document.getElementById('confirm-section').style.display = 'none';
+
+  const diaSelecionado = document.querySelector('.day-btn.selected');
+  if (svcId && barbId && diaSelecionado) {
+    carregarSlots(diaSelecionado.dataset.date);
+  } else {
+    document.getElementById('step-hora').style.display = 'none';
+  }
+}
+
+/* ── Info do serviço ── */
+document.getElementById('svc-select').addEventListener('change', function() {
+  atualizarPassos();
+  const opt = this.options[this.selectedIndex];
+  const preco = opt.dataset.preco, dur = opt.dataset.duracao;
+  document.getElementById('svc-info').innerHTML = preco
+    ? `<i class="fas fa-tag me-1"></i>R$ ${parseFloat(preco).toFixed(2)} &nbsp;·&nbsp; <i class="fas fa-clock me-1"></i>${dur} min`
+    : '';
+});
+document.getElementById('barb-select').addEventListener('change', atualizarPassos);
+
+/* ── Valida submit ── */
+document.getElementById('booking-form').addEventListener('submit', function(e) {
+  if (!document.getElementById('id_data_hora').value) {
+    e.preventDefault();
+    alert('Por favor, selecione um dia e horário antes de confirmar.');
+    document.getElementById('step-dia').scrollIntoView({behavior:'smooth'});
+  }
+});
+
+document.addEventListener('DOMContentLoaded', gerarStrip);
+</script>
+{% endblock %}

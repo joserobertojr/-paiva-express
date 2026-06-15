@@ -1,0 +1,164 @@
+{% extends 'barbearia/base.html' %}
+{% block title %}{{ titulo }} — Boss Barbearia{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+
+  {# ── DADOS DO BARBEIRO ──────────────────────────────── #}
+  <div class="col-lg-7">
+    <div class="boss-card">
+      <div class="boss-card-header">
+        <span class="boss-card-title"><i class="fas fa-cut me-2" style="color:var(--by);"></i>Dados do Barbeiro</span>
+        <a href="{% url 'barbearia:barbeiros' %}" class="btn btn-sm btn-boss-outline">
+          <i class="fas fa-arrow-left me-1"></i> Voltar
+        </a>
+      </div>
+      <div class="boss-card-body">
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">{{ form.nome.label }}</label>
+              {{ form.nome }}
+              {% if form.nome.errors %}<div class="text-danger small mt-1">{{ form.nome.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">{{ form.whatsapp.label }}</label>
+              {{ form.whatsapp }}
+              {% if form.whatsapp.errors %}<div class="text-danger small mt-1">{{ form.whatsapp.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">{{ form.data_nascimento.label }}</label>
+              {{ form.data_nascimento }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">{{ form.foto_perfil.label }}</label>
+              {{ form.foto_perfil }}
+              {% if barbeiro.foto_perfil %}
+              <div class="mt-2">
+                <img src="{{ barbeiro.foto_perfil.url }}" style="height:50px;border-radius:50%;border:2px solid var(--by);">
+                <small class="text-muted ms-2">Foto atual</small>
+              </div>
+              {% endif %}
+            </div>
+            <div class="col-12">
+              <div class="form-check">
+                {{ form.ativo }}
+                <label class="form-check-label fw-semibold">Barbeiro ativo</label>
+              </div>
+            </div>
+          </div>
+
+          {# ── GRADE DE HORÁRIOS ──────────────────────── #}
+          <hr class="my-4">
+          <h6 class="fw-bold mb-3" style="font-family:'Oswald',sans-serif;font-size:.95rem;color:var(--bb);">
+            <i class="fas fa-calendar-week me-2" style="color:var(--by);"></i>Grade de Horários
+            <small class="fw-normal text-muted" style="font-family:'Open Sans',sans-serif;font-size:.75rem;">
+              — blocos de 30 em 30 min
+            </small>
+          </h6>
+
+          {{ formset.management_form }}
+          <div class="table-responsive">
+            <table class="table table-sm align-middle" style="font-size:.85rem;">
+              <thead>
+                <tr style="background:#f4f5f7;">
+                  <th style="width:34%;">Dia da semana</th>
+                  <th style="width:22%;">Início</th>
+                  <th style="width:22%;">Fim</th>
+                  <th style="width:12%;text-align:center;">Ativo</th>
+                  <th style="width:10%;text-align:center;">Excluir</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for h in formset %}
+                <tr>
+                  {% for hidden in h.hidden_fields %}{{ hidden }}{% endfor %}
+                  <td>{{ h.dia_semana }}</td>
+                  <td>{{ h.hora_inicio }}</td>
+                  <td>{{ h.hora_fim }}</td>
+                  <td class="text-center">{{ h.ativo }}</td>
+                  <td class="text-center">
+                    {% if h.instance.pk %}
+                      <div class="form-check d-flex justify-content-center">{{ h.DELETE }}</div>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% if h.errors %}<tr><td colspan="5" class="text-danger small">{{ h.errors }}</td></tr>{% endif %}
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <small class="text-muted">
+            O sistema gera automaticamente blocos de <strong>30 em 30 minutos</strong> entre o horário
+            de início e fim cadastrado. Linhas em branco criam novos turnos; marque "Excluir" para remover.
+          </small>
+
+          <hr class="my-4">
+          <div class="d-flex justify-content-end gap-2">
+            <a href="{% url 'barbearia:barbeiros' %}" class="btn btn-boss-outline">Cancelar</a>
+            <button type="submit" class="btn btn-boss">
+              <i class="fas fa-save me-1"></i> Salvar Alterações
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {# ── RESUMO LATERAL ──────────────────────────────────── #}
+  <div class="col-lg-5">
+    <div class="boss-card mb-3">
+      <div class="boss-card-header">
+        <span class="boss-card-title"><i class="fas fa-id-card me-2" style="color:var(--by);"></i>Perfil</span>
+      </div>
+      <div class="boss-card-body text-center">
+        {% if barbeiro.foto_perfil %}
+          <img src="{{ barbeiro.foto_perfil.url }}" alt="{{ barbeiro.nome }}"
+               style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--by);margin-bottom:.75rem;">
+        {% else %}
+        <div style="width:80px;height:80px;border-radius:50%;background:var(--by);display:flex;align-items:center;justify-content:center;font-weight:700;color:#000;font-family:'Oswald',sans-serif;font-size:1.8rem;margin:0 auto .75rem;">
+          {{ barbeiro.nome|first|upper }}
+        </div>
+        {% endif %}
+        <h6 style="font-family:'Oswald',sans-serif;font-size:1.05rem;">{{ barbeiro.nome }}</h6>
+        {% if barbeiro.whatsapp %}
+        <a href="{{ barbeiro.link_whatsapp }}" target="_blank" style="font-size:.85rem;color:#25D366;">
+          <i class="fab fa-whatsapp me-1"></i>{{ barbeiro.whatsapp }}
+        </a>
+        {% endif %}
+        {% if not barbeiro.ativo %}
+          <div class="mt-2"><span class="badge bg-danger">Inativo</span></div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if grades_atuais %}
+    <div class="boss-card">
+      <div class="boss-card-header">
+        <span class="boss-card-title"><i class="fas fa-clock me-2" style="color:var(--by);"></i>Turnos Cadastrados</span>
+      </div>
+      <div class="boss-card-body p-0">
+        <ul class="list-group list-group-flush" style="font-size:.85rem;">
+          {% for g in grades_atuais %}
+          <li class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+            <span>{{ g.get_dia_semana_display }}</span>
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-muted">{{ g.hora_inicio|time:"H:i" }} – {{ g.hora_fim|time:"H:i" }}</span>
+              {% if g.ativo %}
+                <span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:.65rem;">Ativo</span>
+              {% else %}
+                <span class="badge" style="background:#fce4ec;color:#b71c1c;font-size:.65rem;">Inativo</span>
+              {% endif %}
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

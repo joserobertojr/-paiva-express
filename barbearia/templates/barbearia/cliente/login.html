@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal do Cliente — Boss Barbearia</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    body { min-height: 100vh; background: #0a0a0a; display: flex; align-items: center; justify-content: center; font-family: 'Open Sans', sans-serif; position: relative; overflow: hidden; }
+    body::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(255,215,0,.015) 40px, rgba(255,215,0,.015) 41px); }
+    .wrap { position: relative; z-index: 1; width: 100%; max-width: 860px; display: flex; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+    .left-panel { background: #111; border: 1px solid rgba(255,215,0,.15); padding: 2.5rem 2.25rem; flex: 1; }
+    .right-panel { background: linear-gradient(135deg, #FFD700 0%, #c9a800 100%); padding: 2.5rem; width: 240px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .brand { font-family: 'Oswald', sans-serif; font-size: 2rem; font-weight: 700; color: #FFD700; letter-spacing: 2px; }
+    .brand sub { display: block; color: rgba(255,255,255,.35); font-size: .55rem; letter-spacing: 4px; text-transform: uppercase; font-family: 'Open Sans', sans-serif; font-weight: 300; margin-top: .1rem; }
+    .scissors-icon { font-size: 2.2rem; color: #FFD700; margin-bottom: .5rem; }
+    .form-label { color: rgba(255,255,255,.55); font-size: .82rem; font-weight: 600; margin-bottom: .35rem; }
+    .form-control { background: #1a1a1a; border: 1px solid #333; color: #fff; border-radius: 8px; padding: .65rem 1rem; }
+    .form-control:focus { background: #1a1a1a; border-color: #FFD700; box-shadow: 0 0 0 .2rem rgba(255,215,0,.2); color: #fff; }
+    .form-control::placeholder { color: #555; }
+    .btn-login { background: #FFD700; color: #000; border: none; width: 100%; padding: .75rem; font-family: 'Oswald', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 1px; border-radius: 8px; transition: all .2s; }
+    .btn-login:hover { background: #c9a800; transform: translateY(-1px); }
+    .divider { border: none; border-top: 1px solid rgba(255,215,0,.12); margin: 1.25rem 0; }
+    .alert-danger { background: rgba(220,38,38,.15); border: 1px solid rgba(220,38,38,.3); color: #f87171; border-radius: 8px; font-size: .85rem; }
+    .right-panel-title { font-family: 'Oswald', sans-serif; font-size: 1.5rem; font-weight: 700; color: #000; }
+    .right-panel-sub { color: rgba(0,0,0,.65); font-size: .82rem; margin: .75rem 0 1.5rem; }
+    .btn-register { background: #000; color: #FFD700; border: none; width: 100%; padding: .65rem; font-family: 'Oswald', sans-serif; font-size: .95rem; font-weight: 700; border-radius: 8px; transition: all .2s; text-decoration: none; display: block; }
+    .btn-register:hover { background: #222; color: #FFD700; }
+    .benefit-item { display: flex; align-items: center; gap: .5rem; color: rgba(0,0,0,.75); font-size: .8rem; margin-bottom: .4rem; text-align: left; }
+    @media (max-width: 640px) { .right-panel { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="left-panel">
+      <div class="mb-4">
+        <div class="scissors-icon"><i class="fas fa-scissors"></i></div>
+        <div class="brand">BOSS<sub>Portal do Cliente</sub></div>
+      </div>
+      <hr class="divider">
+
+      {% if messages %}{% for msg in messages %}
+      <div class="alert alert-danger mb-3"><i class="fas fa-exclamation-circle me-2"></i>{{ msg }}</div>
+      {% endfor %}{% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label"><i class="fas fa-user me-1"></i> Usuário</label>
+          <input type="text" name="username" class="form-control" placeholder="Seu usuário" autofocus required>
+        </div>
+        <div class="mb-4">
+          <label class="form-label"><i class="fas fa-lock me-1"></i> Senha</label>
+          <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn-login"><i class="fas fa-sign-in-alt me-2"></i>ENTRAR</button>
+      </form>
+
+      <p style="text-align:center;color:rgba(255,255,255,.3);font-size:.78rem;margin-top:1.25rem;">
+        Ainda não tem conta?
+        <a href="{% url 'barbearia:cliente_registro' %}" style="color:#FFD700;text-decoration:none;">Criar agora →</a>
+      </p>
+      <p style="text-align:center;margin-top:.5rem;">
+        <a href="{% url 'barbearia:login' %}" style="color:rgba(255,255,255,.25);font-size:.72rem;text-decoration:none;">
+          <i class="fas fa-shield-alt me-1"></i>Sou funcionário → Acesso Administrativo
+        </a>
+      </p>
+    </div>
+
+    <div class="right-panel">
+      <div class="right-panel-title">Agende<br>Online!</div>
+      <div class="right-panel-sub">Marque seu horário a qualquer hora, de onde estiver.</div>
+      <div class="mb-3" style="width:100%;">
+        <div class="benefit-item"><i class="fas fa-calendar-check" style="color:#000;"></i> Veja horários disponíveis</div>
+        <div class="benefit-item"><i class="fas fa-bell" style="color:#000;"></i> Confirmação automática</div>
+        <div class="benefit-item"><i class="fas fa-history" style="color:#000;"></i> Histórico completo</div>
+        <div class="benefit-item"><i class="fas fa-times-circle" style="color:#000;"></i> Cancele quando quiser</div>
+      </div>
+      <a href="{% url 'barbearia:cliente_registro' %}" class="btn-register">CRIAR CONTA GRÁTIS</a>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

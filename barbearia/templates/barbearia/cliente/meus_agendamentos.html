@@ -1,0 +1,74 @@
+{% extends 'barbearia/cliente/base.html' %}
+{% block title %}Meus Agendamentos — Boss Barbearia{% endblock %}
+
+{% block content %}
+<h4 style="font-family:'Oswald',sans-serif;margin-bottom:1.25rem;"><i class="fas fa-calendar-check me-2" style="color:#FFD700;"></i>Meus Agendamentos</h4>
+
+<!-- PRÓXIMOS -->
+<div class="c-card mb-3">
+  <div class="c-card-header">
+    <span class="c-card-title">Próximos</span>
+    <a href="{% url 'barbearia:cliente_agendar' %}" class="btn btn-sm btn-boss"><i class="fas fa-plus me-1"></i>Novo</a>
+  </div>
+  {% if futuros %}
+  {% for ag in futuros %}
+  <div style="padding:1rem 1.25rem;{% if not forloop.last %}border-bottom:1px solid #f5f5f5;{% endif %}">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div style="background:#0a0a0a;border-radius:10px;padding:.5rem .85rem;text-align:center;min-width:56px;">
+        <div style="font-family:'Oswald',sans-serif;color:#FFD700;font-size:1.2rem;line-height:1;">{{ ag.data_hora|date:"d" }}</div>
+        <div style="color:rgba(255,255,255,.5);font-size:.6rem;text-transform:uppercase;letter-spacing:1px;">{{ ag.data_hora|date:"M" }}</div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-weight:600;">{{ ag.servico.nome|default:"Serviço" }}</div>
+        <div style="font-size:.8rem;color:#999;">
+          {{ ag.data_hora|time:"H:i" }}h &nbsp;·&nbsp; {{ ag.barbeiro.nome|default:"Barbeiro" }}
+          &nbsp;·&nbsp; R$ {{ ag.valor_cobrado|floatformat:2 }}
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge-status s-{{ ag.status }}">{{ ag.get_status_display }}</span>
+        {% if ag.status in 'agendado confirmado' %}
+        <form method="post" action="{% url 'barbearia:cliente_cancelar' ag.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-danger" style="font-size:.75rem;padding:.2rem .5rem;" onclick="return confirm('Cancelar este agendamento?')">
+            <i class="fas fa-times me-1"></i>Cancelar
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="c-card-body text-center py-4 text-muted">
+    <i class="fas fa-calendar-xmark fa-2x mb-2" style="color:#ddd;"></i>
+    <p class="mb-0" style="font-size:.88rem;">Nenhum agendamento futuro.</p>
+    <a href="{% url 'barbearia:cliente_agendar' %}" class="btn btn-boss btn-sm mt-2">Agendar agora</a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- HISTÓRICO -->
+{% if passados %}
+<div class="c-card">
+  <div class="c-card-header">
+    <span class="c-card-title">Histórico</span>
+  </div>
+  {% for ag in passados %}
+  <div style="padding:.8rem 1.25rem;{% if not forloop.last %}border-bottom:1px solid #f5f5f5;{% endif %}opacity:{% if ag.status == 'cancelado' or ag.status == 'faltou' %}0.55{% else %}1{% endif %};">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div style="font-size:.85rem;color:#aaa;min-width:80px;">{{ ag.data_hora|date:"d/m/Y" }}</div>
+      <div style="flex:1;">
+        <div style="font-size:.88rem;font-weight:600;">{{ ag.servico.nome|default:"—" }}</div>
+        <div style="font-size:.75rem;color:#bbb;">{{ ag.data_hora|time:"H:i" }}h · {{ ag.barbeiro.nome|default:"—" }}</div>
+      </div>
+      <div>
+        <span class="badge-status s-{{ ag.status }}">{{ ag.get_status_display }}</span>
+      </div>
+      <div style="font-family:'Oswald',sans-serif;font-size:.95rem;font-weight:700;color:#555;">R$ {{ ag.valor_cobrado|floatformat:2 }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

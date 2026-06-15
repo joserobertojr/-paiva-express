@@ -9,6 +9,7 @@ from pacotes.models import Pacote
 from reservas.models import Reserva
 from pagamentos.models import Pagamento
 from vendedores.models import Vendedor
+from pagamentos.models import BancoPix
 from .decorators import admin_required
 from .models import PerfilUsuario, AuditLog, SECOES
 from .audit import log as audit_log
@@ -51,11 +52,14 @@ def dashboard(request):
 @login_required
 @admin_required
 def configuracoes(request):
-    # Só exibe vendedores que já têm acesso ao sistema
     usuarios = Vendedor.objects.filter(
         ativo=True, user__isnull=False
     ).select_related('user__perfil').order_by('nome')
-    return render(request, 'configuracoes/index.html', {'usuarios': usuarios})
+    bancos = BancoPix.objects.filter(ativo=True)
+    return render(request, 'configuracoes/index.html', {
+        'usuarios': usuarios,
+        'bancos': bancos,
+    })
 
 
 @login_required
@@ -168,3 +172,54 @@ def conf_excluir_usuario(request, vendedor_pk):
 def conf_logs(request):
     logs = AuditLog.objects.select_related('usuario').order_by('-timestamp')[:200]
     return render(request, 'configuracoes/logs.html', {'logs': logs})
+
+
+# ── Bancos PIX ────────────────────────────────────────────────────────────────
+
+@login_required
+@admin_required
+def conf_banco_novo(request):
+    if request.method == 'POST':
+        nome = request.POST.get('nome', '').strip()
+        if not nome:
+            messages.error(request, 'Informe o nome do banco.')
+        elif BancoPix.objects.filter(nome__iexact=nome, ativo=True).exists():
+            messages.error(request, 'Banco já cadastrado.')
+        else:
+            BancoPix.objects.create(nome=nome)
+            audit_log(request, AuditLog.ACAO_CRIAR, 'Configurações', f'Cadastrou banco PIX: {nome}')
+            messages.success(request, f'Banco "{nome}" cadastrado.')
+            return redirect('core:configuracoes')
+    return render(request, 'configuracoes/form_banco.html', {'titulo': 'Novo Banco PIX'})
+
+
+@login_required
+@admin_required
+def conf_banco_editar(request, pk):
+    banco = get_object_or_404(BancoPix, pk=pk)
+    if request.method == 'POST':
+        nome = request.POST.get('nome', '').strip()
+        if not nome:
+            messages.error(request, 'Informe o nome do banco.')
+        else:
+            banco.nome = nome
+            banco.save()
+            audit_log(request, AuditLog.ACAO_EDITAR, 'Configurações', f'Editou banco PIX: {nome}')
+            messages.success(request, 'Banco atualizado.')
+            return redirect('core:configuracoes')
+    return render(request, 'configuracoes/form_banco.html', {
+        'titulo': 'Editar Banco PIX', 'banco': banco
+    })
+
+
+@login_required
+@admin_required
+def conf_banco_excluir(request, pk):
+    banco = get_object_or_404(BancoPix, pk=pk)
+    if request.method == 'POST':
+        nome = banco.nome
+        banco.ativo = False
+        banco.save()
+        audit_log(request, AuditLog.ACAO_EXCLUIR, 'Configurações', f'Removeu banco PIX: {nome}')
+        messages.success(request, f'Banco "{nome}" removido.')
+    return redirect('core:configuracoes')

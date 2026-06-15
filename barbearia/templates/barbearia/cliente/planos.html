@@ -1,0 +1,212 @@
+{% extends 'barbearia/cliente/base.html' %}
+{% block title %}Planos — Boss Barbearia{% endblock %}
+
+{% block extra_css %}
+<style>
+  .plano-card {
+    background: #fff;
+    border-radius: 16px;
+    border: 2px solid #e9ecef;
+    overflow: hidden;
+    transition: transform .2s, box-shadow .2s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .plano-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0,0,0,.10);
+  }
+  .plano-card.meu-plano {
+    border-color: #FFD700;
+    box-shadow: 0 0 0 4px rgba(255,215,0,.18);
+  }
+  .plano-header {
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .plano-cor-dot {
+    width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: .4rem; vertical-align: middle;
+  }
+  .plano-nome {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0a0a0a;
+  }
+  .plano-preco {
+    font-family: 'Oswald', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #0a0a0a;
+    line-height: 1;
+  }
+  .plano-preco small {
+    font-size: .75rem;
+    color: #999;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 400;
+  }
+  .plano-body {
+    padding: 1.25rem 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .plano-desc {
+    font-size: .86rem;
+    color: #666;
+    margin-bottom: 1rem;
+    flex: 1;
+  }
+  .servico-tag {
+    display: inline-block;
+    background: #f5f5f5;
+    color: #444;
+    border-radius: 20px;
+    font-size: .72rem;
+    padding: .2rem .6rem;
+    margin: .15rem .1rem;
+    font-weight: 600;
+  }
+  .meu-plano-badge {
+    background: #FFD700;
+    color: #000;
+    font-family: 'Oswald', sans-serif;
+    font-size: .7rem;
+    font-weight: 700;
+    padding: .25rem .65rem;
+    border-radius: 20px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+  .btn-wa-plano {
+    background: #25D366;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: .75rem 1rem;
+    font-family: 'Oswald', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    width: 100%;
+    letter-spacing: .3px;
+    transition: background .2s, transform .15s;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+  }
+  .btn-wa-plano:hover {
+    background: #1da851;
+    color: #fff;
+    transform: translateY(-1px);
+  }
+  .btn-ja-tenho {
+    background: #f5f5f5;
+    color: #888;
+    border: none;
+    border-radius: 10px;
+    padding: .75rem 1rem;
+    font-family: 'Oswald', sans-serif;
+    font-size: .9rem;
+    font-weight: 600;
+    width: 100%;
+    text-align: center;
+    cursor: default;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+  <div>
+    <h4 style="font-family:'Oswald',sans-serif;margin:0;"><i class="fas fa-medal me-2" style="color:#FFD700;"></i>Planos Disponíveis</h4>
+    <p class="text-muted mb-0" style="font-size:.84rem;">Escolha um plano e fale com a gente pelo WhatsApp para fazer seu cadastro.</p>
+  </div>
+  {% if cliente.plano %}
+  <div class="ms-auto">
+    <div style="background:#0a0a0a;border-radius:10px;padding:.6rem 1rem;text-align:center;">
+      <div style="font-size:.65rem;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:1px;">Seu plano atual</div>
+      <div style="font-family:'Oswald',sans-serif;color:#FFD700;font-size:.95rem;font-weight:700;">{{ cliente.plano.nome }}</div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% if planos_ctx %}
+<div class="row g-3">
+  {% for item in planos_ctx %}
+  <div class="col-md-6 col-lg-4">
+    <div class="plano-card {% if item.e_meu_plano %}meu-plano{% endif %}">
+
+      <div class="plano-header">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div>
+            <span class="plano-cor-dot" style="background:{{ item.plano.cor }};"></span>
+            <span class="plano-nome">{{ item.plano.nome }}</span>
+          </div>
+          {% if item.e_meu_plano %}
+          <span class="meu-plano-badge"><i class="fas fa-check me-1"></i>Seu plano</span>
+          {% endif %}
+        </div>
+        <div class="plano-preco">
+          R$ {{ item.plano.preco_mensal|floatformat:2 }}
+          <small>/mês</small>
+        </div>
+      </div>
+
+      <div class="plano-body">
+        {% if item.plano.descricao %}
+        <p class="plano-desc">{{ item.plano.descricao }}</p>
+        {% else %}
+        <p class="plano-desc" style="color:#ccc;font-style:italic;">Sem descrição.</p>
+        {% endif %}
+
+        {% with servicos=item.plano.servicos.all %}
+        {% if servicos %}
+        <div class="mb-3">
+          <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:#999;font-weight:600;margin-bottom:.4rem;">Inclui</div>
+          {% for s in servicos %}
+          <span class="servico-tag"><i class="fas fa-check me-1" style="color:#2e7d32;"></i>{{ s.nome }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <div class="mt-auto pt-2">
+          {% if item.e_meu_plano %}
+          <div class="btn-ja-tenho">
+            <i class="fas fa-check-circle me-2" style="color:#FFD700;"></i>Você já tem este plano
+          </div>
+          {% else %}
+          <a href="{{ item.link_whatsapp }}" target="_blank" rel="noopener" class="btn-wa-plano">
+            <i class="fab fa-whatsapp" style="font-size:1.15rem;"></i>
+            Quero este plano
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="c-card mt-4">
+  <div class="c-card-body py-3 d-flex align-items-center gap-3" style="font-size:.84rem;color:#666;">
+    <i class="fas fa-info-circle fa-lg" style="color:#FFD700;flex-shrink:0;"></i>
+    <span>Ao clicar em <strong>"Quero este plano"</strong>, você será redirecionado para o WhatsApp da Boss Barbearia com uma mensagem pronta. Nossa equipe vai confirmar o cadastro e orientar o pagamento.</span>
+  </div>
+</div>
+
+{% else %}
+<div class="c-card text-center py-5">
+  <i class="fas fa-medal fa-3x mb-3" style="color:#ddd;"></i>
+  <h5 style="color:#aaa;">Nenhum plano disponível no momento.</h5>
+  <p class="text-muted" style="font-size:.87rem;">Fale com a gente pelo WhatsApp para saber mais.</p>
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,257 @@
+{% extends 'barbearia/base.html' %}
+{% block title %}Lembretes WhatsApp — Boss Barbearia{% endblock %}
+{% block page_title %}Lembretes WhatsApp{% endblock %}
+
+{% block extra_css %}
+<style>
+  .lembrete-row { transition: opacity .3s; }
+  .lembrete-row.enviando { opacity: .5; pointer-events: none; }
+  .lembrete-row.enviado-ok { opacity: .4; }
+
+  .btn-wa-send {
+    background: #25D366; color: #fff; border: none;
+    border-radius: 8px; padding: .4rem .85rem;
+    font-size: .82rem; font-weight: 700;
+    display: inline-flex; align-items: center; gap: .4rem;
+    cursor: pointer; transition: background .15s;
+    text-decoration: none;
+  }
+  .btn-wa-send:hover { background: #1da851; color: #fff; }
+  .btn-wa-send:disabled { background: #ccc; color: #888; cursor: default; }
+
+  .sent-badge {
+    display: none;
+    background: #e8f5e9; color: #2e7d32;
+    border-radius: 8px; padding: .35rem .75rem;
+    font-size: .78rem; font-weight: 700;
+    align-items: center; gap: .35rem;
+  }
+  .lembrete-row.enviado-ok .sent-badge { display: inline-flex; }
+  .lembrete-row.enviado-ok .btn-wa-send { display: none; }
+
+  .prazo-chip {
+    font-size: .7rem; font-weight: 700;
+    border-radius: 10px; padding: .15rem .5rem;
+    text-transform: uppercase; letter-spacing: .5px;
+  }
+  .prazo-urgente { background: #fce4ec; color: #b71c1c; }
+  .prazo-hoje    { background: #fff8e1; color: #e65100; }
+  .prazo-amanha  { background: #e3f2fd; color: #1565c0; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HEADER STATS -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#e8f5e9;">
+        <i class="fab fa-whatsapp" style="color:#25D366;font-size:1.3rem;"></i>
+      </div>
+      <div class="kpi-value" id="count-pendentes">{{ pendentes.count }}</div>
+      <div class="kpi-label">Lembretes Pendentes</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#e3f2fd;">
+        <i class="fas fa-check-double" style="color:#1565c0;"></i>
+      </div>
+      <div class="kpi-value">{{ enviados_recentes.count }}</div>
+      <div class="kpi-label">Enviados Recentemente</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#fff8e1;">
+        <i class="fas fa-clock" style="color:#e65100;"></i>
+      </div>
+      <div class="kpi-value">48h</div>
+      <div class="kpi-label">Janela de Visualização</div>
+    </div>
+  </div>
+</div>
+
+<!-- PENDENTES -->
+<div class="boss-card mb-4">
+  <div class="boss-card-header">
+    <span class="boss-card-title">
+      <i class="fas fa-clock me-2" style="color:#FFD700;"></i>
+      Aguardando Lembrete — próximas 48h
+    </span>
+    {% if pendentes %}
+    <button id="btn-enviar-todos" class="btn btn-sm" style="background:#25D366;color:#fff;border:none;font-weight:700;border-radius:8px;padding:.35rem .85rem;">
+      <i class="fab fa-whatsapp me-1"></i>Enviar Todos
+    </button>
+    {% endif %}
+  </div>
+
+  {% if pendentes %}
+  <div class="boss-table">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Horário</th>
+          <th>Cliente</th>
+          <th>Serviço / Barbeiro</th>
+          <th>Status</th>
+          <th class="text-end">Ação</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-pendentes">
+        {% for ag in pendentes %}
+        <tr class="lembrete-row" data-pk="{{ ag.pk }}" data-wa="{{ ag.gerar_link_lembrete }}">
+          <td>
+            <div style="font-family:'Oswald',sans-serif;font-size:1rem;font-weight:700;">
+              {{ ag.data_hora|date:"d/m" }}
+            </div>
+            <div style="font-size:.85rem;color:#555;">{{ ag.data_hora|time:"H:i" }}h</div>
+            {% now "Y-m-d" as hoje_str %}
+            {% if ag.data_hora|date:"Y-m-d" == hoje_str %}
+              <span class="prazo-chip prazo-hoje">Hoje</span>
+            {% else %}
+              <span class="prazo-chip prazo-amanha">Amanhã</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="font-weight:700;">{{ ag.cliente.nome }}</div>
+            <div style="font-size:.78rem;color:#999;">
+              <i class="fab fa-whatsapp me-1" style="color:#25D366;"></i>{{ ag.cliente.telefone }}
+            </div>
+          </td>
+          <td style="font-size:.85rem;">
+            <div>{{ ag.servico.nome|default:"—" }}</div>
+            <div style="color:#999;">{{ ag.barbeiro.nome|default:"—" }}</div>
+          </td>
+          <td>
+            <span class="badge-status s-{{ ag.status }}">{{ ag.get_status_display }}</span>
+          </td>
+          <td class="text-end">
+            <a href="#" class="btn-wa-send"
+               data-pk="{{ ag.pk }}"
+               data-wa="{{ ag.gerar_link_lembrete }}"
+               onclick="enviarLembrete(this, event)">
+              <i class="fab fa-whatsapp"></i>Enviar WhatsApp
+            </a>
+            <span class="sent-badge">
+              <i class="fas fa-check"></i>Enviado
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="boss-card-body text-center py-5">
+    <i class="fab fa-whatsapp fa-3x mb-3" style="color:#ddd;"></i>
+    <h5 style="color:#aaa;">Nenhum lembrete pendente nas próximas 48h.</h5>
+    <p class="text-muted" style="font-size:.85rem;">Os agendamentos futuros aparecerão aqui quando estiverem dentro da janela de 48 horas.</p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- HISTÓRICO ENVIADOS -->
+{% if enviados_recentes %}
+<div class="boss-card">
+  <div class="boss-card-header">
+    <span class="boss-card-title">
+      <i class="fas fa-history me-2" style="color:#FFD700;"></i>
+      Lembretes Enviados Recentemente
+    </span>
+  </div>
+  <div class="boss-table">
+    <table class="table mb-0">
+      <thead>
+        <tr>
+          <th>Agendamento</th>
+          <th>Cliente</th>
+          <th>Enviado em</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ag in enviados_recentes %}
+        <tr style="opacity:.7;">
+          <td style="font-size:.85rem;">
+            {{ ag.data_hora|date:"d/m/Y" }} às {{ ag.data_hora|time:"H:i" }}h
+          </td>
+          <td>
+            <div style="font-weight:600;font-size:.88rem;">{{ ag.cliente.nome }}</div>
+            <div style="font-size:.75rem;color:#999;">{{ ag.cliente.telefone }}</div>
+          </td>
+          <td style="font-size:.82rem;color:#888;">
+            {{ ag.lembrete_enviado_em|date:"d/m/Y H:i" }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+let pendentesCount = {{ pendentes.count }};
+
+async function marcarEnviado(pk) {
+  const resp = await fetch(`/barbearia/lembretes/${pk}/marcar-enviado/`, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' },
+  });
+  return resp.ok;
+}
+
+function enviarLembrete(btn, event) {
+  event.preventDefault();
+  const row = btn.closest('.lembrete-row');
+  const pk = btn.dataset.pk;
+  const waLink = btn.dataset.wa;
+
+  // Abre WhatsApp em nova aba
+  window.open(waLink, '_blank');
+
+  // Marca como enviado na API e atualiza UI
+  row.classList.add('enviando');
+  marcarEnviado(pk).then(ok => {
+    if (ok) {
+      row.classList.remove('enviando');
+      row.classList.add('enviado-ok');
+      pendentesCount = Math.max(0, pendentesCount - 1);
+      document.getElementById('count-pendentes').textContent = pendentesCount;
+    } else {
+      row.classList.remove('enviando');
+      alert('Erro ao marcar lembrete. Tente novamente.');
+    }
+  });
+}
+
+// Botão "Enviar Todos" — abre cada WhatsApp com 800ms de intervalo
+document.getElementById('btn-enviar-todos')?.addEventListener('click', async function() {
+  if (!confirm('Abrir o WhatsApp para TODOS os clientes pendentes?')) return;
+  this.disabled = true;
+
+  const rows = document.querySelectorAll('#tbody-pendentes .lembrete-row:not(.enviado-ok)');
+  for (const row of rows) {
+    const pk = row.dataset.pk;
+    const waLink = row.dataset.wa;
+
+    row.classList.add('enviando');
+    window.open(waLink, '_blank');
+    await marcarEnviado(pk);
+    row.classList.remove('enviando');
+    row.classList.add('enviado-ok');
+    pendentesCount = Math.max(0, pendentesCount - 1);
+    document.getElementById('count-pendentes').textContent = pendentesCount;
+
+    // Pausa entre cada abertura para não ser bloqueado como popup
+    await new Promise(r => setTimeout(r, 900));
+  }
+  this.textContent = 'Todos enviados ✓';
+});
+</script>
+{% endblock %}

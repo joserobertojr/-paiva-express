@@ -1,0 +1,127 @@
+{% extends 'barbearia/base.html' %}
+{% block title %}Relatório de Planos — Boss Barbearia{% endblock %}
+{% block page_title %}Relatório por Plano{% endblock %}
+
+{% block content %}
+
+{# ── FILTRO DE MÊS/ANO ── #}
+<form method="get" class="d-flex align-items-center gap-2 mb-4" style="max-width:340px;">
+  <select name="mes" class="form-select form-select-sm" style="width:auto;">
+    {% for num, label in meses %}
+    <option value="{{ num }}" {% if num == mes %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <select name="ano" class="form-select form-select-sm" style="width:auto;">
+    {% for a in anos %}
+    <option value="{{ a }}" {% if a == ano %}selected{% endif %}>{{ a }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn btn-boss btn-sm" type="submit"><i class="fas fa-filter me-1"></i>Filtrar</button>
+  <a href="{% url 'barbearia:planos' %}" class="btn btn-boss-outline btn-sm">Voltar</a>
+</form>
+
+{# ── KPI SUMMARY ── #}
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(255,215,0,.12);"><i class="fas fa-medal" style="color:var(--by);"></i></div>
+      <div class="kpi-value">R$ {{ receita_planos|floatformat:2 }}</div>
+      <div class="kpi-label">Receita de Planos ({{ mes }}/{{ ano }})</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(66,165,245,.12);"><i class="fas fa-cash-register" style="color:#42a5f5;"></i></div>
+      <div class="kpi-value">R$ {{ total_avulso|floatformat:2 }}</div>
+      <div class="kpi-label">Receita Avulsa (concluídos)</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(102,187,106,.12);"><i class="fas fa-chart-line" style="color:#66bb6a;"></i></div>
+      <div class="kpi-value">R$ {{ receita_total_esperada|floatformat:2 }}</div>
+      <div class="kpi-label">Receita Total Realizada</div>
+    </div>
+  </div>
+</div>
+
+{# ── DETALHAMENTO POR PLANO ── #}
+<div class="boss-table mb-4">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Plano</th>
+        <th>Preço/mês</th>
+        <th>Clientes Ativos</th>
+        <th>Receita Esperada</th>
+        <th>Serviços Cobertos</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in planos_stats %}
+      <tr>
+        <td>
+          <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:{{ p.cor }};margin-right:6px;"></span>
+          <strong>{{ p.nome }}</strong>
+        </td>
+        <td>R$ {{ p.preco_mensal|floatformat:2 }}</td>
+        <td>
+          <span class="badge" style="background:{{ p.cor }};color:#000;font-weight:700;">
+            {{ p.num_ativos }}
+          </span>
+        </td>
+        <td><strong>R$ {{ p.preco_mensal|floatformat:2 }}</strong> × {{ p.num_ativos }} = R$ {% widthratio p.preco_mensal 1 p.num_ativos %}</td>
+        <td>
+          {% for svc in p.servicos.all %}
+          <span class="badge" style="background:#f4f5f7;color:#555;font-size:.7rem;">{{ svc.nome }}</span>
+          {% empty %}<span class="text-muted small">—</span>{% endfor %}
+        </td>
+        <td>
+          {% if p.ativo %}
+            <span class="badge" style="background:#e8f5e9;color:#2e7d32;">Ativo</span>
+          {% else %}
+            <span class="badge" style="background:#fce4ec;color:#b71c1c;">Inativo</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="text-center text-muted py-4">Nenhum plano ativo.</td></tr>
+      {% endfor %}
+    </tbody>
+    {% if planos_stats %}
+    <tfoot>
+      <tr style="background:#f4f5f7;font-weight:700;">
+        <td colspan="2">Total Planos</td>
+        <td>{{ planos_stats|length }} plano(s)</td>
+        <td colspan="3">R$ {{ receita_planos|floatformat:2 }}</td>
+      </tr>
+    </tfoot>
+    {% endif %}
+  </table>
+</div>
+
+{# ── RECEITA AVULSA ── #}
+<div class="boss-card mb-4">
+  <div class="boss-card-header">
+    <span class="boss-card-title"><i class="fas fa-cash-register me-2" style="color:var(--by);"></i>Receita Avulsa — {{ mes }}/{{ ano }}</span>
+  </div>
+  <div class="boss-card-body">
+    <div class="row g-3 text-center">
+      <div class="col-sm-4">
+        <div style="font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;">R$ {{ total_avulso|floatformat:2 }}</div>
+        <small class="text-muted">Cobrado (avulso)</small>
+      </div>
+      <div class="col-sm-4" style="border-left:1px solid var(--border);">
+        <div style="font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;color:#42a5f5;">R$ {{ total_coberto|floatformat:2 }}</div>
+        <small class="text-muted">Valor "abonado" pelos planos</small>
+      </div>
+      <div class="col-sm-4" style="border-left:1px solid var(--border);">
+        <div style="font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;color:#66bb6a;">R$ {{ receita_total_esperada|floatformat:2 }}</div>
+        <small class="text-muted">Receita total (planos + avulso)</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

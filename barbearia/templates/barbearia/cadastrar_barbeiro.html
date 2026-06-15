@@ -1,0 +1,71 @@
+{% extends 'barbearia/base.html' %}
+{% block title %}Cadastrar Barbeiro — Boss Barbearia{% endblock %}
+{% block page_title %}Cadastrar Barbeiro{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7 col-lg-6">
+    <div class="boss-card">
+      <div class="boss-card-header">
+        <span class="boss-card-title"><i class="fas fa-user-plus me-2" style="color:var(--by);"></i>{{ titulo }}</span>
+        <a href="{% url 'barbearia:barbeiros' %}" class="btn btn-sm btn-boss-outline">
+          <i class="fas fa-arrow-left me-1"></i> Voltar
+        </a>
+      </div>
+      <div class="boss-card-body">
+
+        <div class="boss-card mb-3" style="border-left:4px solid var(--by);background:#fffdf0;">
+          <div class="boss-card-body py-2" style="font-size:.82rem;color:#666;">
+            <i class="fas fa-info-circle me-1" style="color:var(--by);"></i>
+            <strong>Barbeiros não precisam de login.</strong> Eles são entidades profissionais vinculadas aos
+            agendamentos. Para criar um <em>login do sistema</em>, acesse
+            <a href="{% url 'barbearia:configuracoes_usuarios' %}">Configurações → Usuários</a>.
+          </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">{{ form.nome.label }}</label>
+              {{ form.nome }}
+              {% if form.nome.errors %}<div class="text-danger small mt-1">{{ form.nome.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">{{ form.whatsapp.label }}</label>
+              {{ form.whatsapp }}
+              {% if form.whatsapp.errors %}<div class="text-danger small mt-1">{{ form.whatsapp.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">{{ form.data_nascimento.label }}</label>
+              {{ form.data_nascimento }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">{{ form.foto_perfil.label }}</label>
+              {{ form.foto_perfil }}
+              <small class="text-muted">Opcional. JPG ou PNG.</small>
+            </div>
+            <div class="col-12">
+              <div class="form-check">
+                {{ form.ativo }}
+                <label class="form-check-label fw-semibold">Barbeiro ativo</label>
+              </div>
+            </div>
+          </div>
+          <hr class="my-4">
+          <p class="text-muted" style="font-size:.83rem;">
+            <i class="fas fa-calendar-week me-1" style="color:var(--by);"></i>
+            Após cadastrar, você poderá definir a <strong>Grade de Horários</strong> (dias e turnos de trabalho).
+          </p>
+          <div class="d-flex justify-content-end gap-2">
+            <a href="{% url 'barbearia:barbeiros' %}" class="btn btn-boss-outline">Cancelar</a>
+            <button type="submit" class="btn btn-boss">
+              <i class="fas fa-save me-1"></i> Cadastrar e Definir Grade
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'barbearia/base.html' %}
+{% block title %}{{ titulo }} — Boss Barbearia{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-7">
+    <div class="boss-card">
+      <div class="boss-card-header">
+        <span class="boss-card-title">
+          <i class="fas fa-medal me-2" style="color:var(--by);"></i>{{ titulo }}
+        </span>
+        <a href="{% url 'barbearia:planos' %}" class="btn btn-sm btn-boss-outline">
+          <i class="fas fa-arrow-left me-1"></i> Voltar
+        </a>
+      </div>
+      <div class="boss-card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="row g-3">
+            <div class="col-sm-8">
+              <label class="form-label">{{ form.nome.label }}</label>
+              {{ form.nome }}
+              {% if form.nome.errors %}<div class="text-danger small mt-1">{{ form.nome.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label">Cor de destaque</label>
+              {{ form.cor }}
+              {% if form.cor.errors %}<div class="text-danger small mt-1">{{ form.cor.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">{{ form.preco_mensal.label }}</label>
+              {{ form.preco_mensal }}
+              {% if form.preco_mensal.errors %}<div class="text-danger small mt-1">{{ form.preco_mensal.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="col-sm-6 d-flex align-items-center pt-4">
+              <div class="form-check">
+                {{ form.ativo }}
+                <label class="form-check-label fw-semibold">Plano ativo</label>
+              </div>
+            </div>
+            <div class="col-12">
+              <label class="form-label">{{ form.descricao.label }}</label>
+              {{ form.descricao }}
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-bold">{{ form.servicos.label }}</label>
+              <div class="p-3 rounded" style="border:1px solid var(--border);background:#f9f9f9;max-height:220px;overflow-y:auto;">
+                {% for checkbox in form.servicos %}
+                <div class="form-check mb-1">
+                  {{ checkbox.tag }}
+                  <label class="form-check-label" for="{{ checkbox.id_for_label }}" style="font-size:.88rem;">
+                    {{ checkbox.choice_label }}
+                  </label>
+                </div>
+                {% empty %}
+                <p class="text-muted small mb-0">Nenhum serviço cadastrado. <a href="{% url 'barbearia:novo_servico' %}">Cadastrar agora</a></p>
+                {% endfor %}
+              </div>
+              {% if form.servicos.errors %}<div class="text-danger small mt-1">{{ form.servicos.errors.0 }}</div>{% endif %}
+              <small class="text-muted">Marque os serviços que estão incluídos neste plano.</small>
+            </div>
+          </div>
+
+          <hr class="my-4">
+          <div class="d-flex justify-content-end gap-2">
+            <a href="{% url 'barbearia:planos' %}" class="btn btn-boss-outline">Cancelar</a>
+            <button type="submit" class="btn btn-boss">
+              <i class="fas fa-save me-1"></i> Salvar Plano
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

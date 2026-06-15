@@ -1,0 +1,351 @@
+{% extends 'barbearia/base.html' %}
+{% block title %}{{ titulo }} — Boss Barbearia{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── SELETOR DE DIA ── */
+  .day-strip {
+    display:flex; gap:.45rem; overflow-x:auto; padding-bottom:.4rem;
+    scrollbar-width:thin; scrollbar-color:#e0e0e0 transparent;
+  }
+  .day-strip::-webkit-scrollbar { height:4px; }
+  .day-strip::-webkit-scrollbar-thumb { background:#e0e0e0; border-radius:2px; }
+
+  .day-btn {
+    flex:0 0 auto; min-width:62px; padding:.65rem .4rem;
+    border:2px solid var(--border); border-radius:10px;
+    background:#fff; text-align:center; cursor:pointer;
+    transition:all .15s; outline:none; font-family:inherit;
+  }
+  .day-btn:hover:not(:disabled) { border-color:#FFD700; background:#fffde7; }
+  .day-btn.selected { background:#0a0a0a; border-color:#0a0a0a; color:#FFD700; }
+  .day-name { display:block; font-size:.6rem; text-transform:uppercase; letter-spacing:1px; opacity:.7; }
+  .day-num  { display:block; font-family:'Oswald',sans-serif; font-size:1.3rem; line-height:1.2; }
+  .day-mes  { display:block; font-size:.6rem; opacity:.6; }
+  .day-btn.selected .day-name,
+  .day-btn.selected .day-mes { opacity:.65; }
+
+  /* ── GRADE DE HORÁRIOS ── */
+  .slots-grid { display:flex; flex-wrap:wrap; gap:.4rem; }
+  .slot-btn {
+    padding:.4rem .8rem;
+    border:2px solid var(--border); border-radius:7px;
+    background:#fff; font-family:'Oswald',sans-serif;
+    font-size:.9rem; font-weight:600; color:#0a0a0a;
+    cursor:pointer; transition:all .12s; outline:none;
+  }
+  .slot-btn:hover { border-color:#FFD700; background:#fffde7; }
+  .slot-btn.selected { background:#FFD700; border-color:#c9a800; color:#000; }
+
+  .picker-section {
+    border:1px solid var(--border); border-radius:10px; padding:1rem; margin-top:.25rem;
+  }
+  .picker-label { font-weight:700; font-size:.8rem; color:#555; text-transform:uppercase; letter-spacing:.5px; margin-bottom:.6rem; display:block; }
+
+  .slot-escolhido { display:none; background:#fffde7; border:2px solid #FFD700; border-radius:8px; padding:.6rem 1rem; font-size:.88rem; font-weight:600; color:#0a0a0a; margin-top:.75rem; align-items:center; gap:.5rem; }
+  .slot-escolhido.visivel { display:flex; }
+
+  /* Manual toggle */
+  .toggle-manual { font-size:.75rem; color:#999; cursor:pointer; text-decoration:underline; }
+  .toggle-manual:hover { color:#555; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="boss-card">
+      <div class="boss-card-header">
+        <span class="boss-card-title">
+          <i class="fas fa-calendar-plus me-2" style="color:#FFD700;"></i>{{ titulo }}
+        </span>
+        <a href="{% url 'barbearia:agenda' %}" class="btn btn-sm btn-outline-secondary">
+          <i class="fas fa-arrow-left me-1"></i>Voltar
+        </a>
+      </div>
+      <div class="boss-card-body">
+        <form method="post" class="boss-form" id="agendamento-form">
+          {% csrf_token %}
+
+          {% if form.errors %}
+          <div class="alert alert-danger mb-3" style="font-size:.85rem;">
+            <i class="fas fa-exclamation-circle me-2"></i>Corrija os erros abaixo.
+          </div>
+          {% endif %}
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Cliente *</label>
+              {{ form.cliente }}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Barbeiro *</label>
+              {{ form.barbeiro }}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Serviço *</label>
+              {{ form.servico }}
+              <small id="duracao-info" class="text-muted mt-1 d-block" style="font-size:.75rem;"></small>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Valor Cobrado (R$)</label>
+              <div class="input-group">
+                {{ form.valor_cobrado }}
+                <span class="input-group-text" style="background:#fff8e1;border-color:#ffe082;">
+                  <i class="fas fa-magic" style="color:#f57f17;font-size:.8rem;" title="Auto-preenchido"></i>
+                </span>
+              </div>
+              <small class="text-muted" style="font-size:.72rem;">Preenchido automaticamente pelo serviço.</small>
+            </div>
+
+            <!-- SELETOR DE DIA E HORA -->
+            <div class="col-12">
+              <label class="form-label">Data e Horário *</label>
+
+              <!-- Campo oculto submetido -->
+              <input type="hidden" name="data_hora" id="id_data_hora"
+                     value="{{ form.data_hora.value|default:'' }}">
+
+              <div class="picker-section">
+                <!-- Dia -->
+                <span class="picker-label"><i class="fas fa-calendar me-1"></i>Dia</span>
+                <div class="day-strip" id="day-strip"></div>
+
+                <!-- Horário -->
+                <div id="wrap-slots" style="display:none;margin-top:1rem;">
+                  <span class="picker-label"><i class="fas fa-clock me-1"></i>Horário disponível</span>
+                  <div class="slots-grid" id="slots-grid"></div>
+                </div>
+
+                <!-- Horário selecionado confirmado -->
+                <div class="slot-escolhido" id="slot-escolhido">
+                  <i class="fas fa-check-circle" style="color:#c9a800;"></i>
+                  <span id="slot-texto"></span>
+                </div>
+
+                <div class="mt-2">
+                  <span class="toggle-manual" id="toggle-manual" onclick="toggleManual()">
+                    <i class="fas fa-keyboard me-1"></i>Inserir data manualmente
+                  </span>
+                </div>
+
+                <!-- Fallback manual -->
+                <div id="wrap-manual" style="display:none;margin-top:.75rem;">
+                  <input type="datetime-local" id="input-manual"
+                         class="form-control"
+                         value="{{ form.data_hora.value|default:'' }}"
+                         onchange="preencherManual(this.value)">
+                  <small class="text-muted" style="font-size:.72rem;">Use este campo para datas além de 7 dias ou horários personalizados.</small>
+                </div>
+              </div>
+
+              {% if form.data_hora.errors %}
+              <div class="text-danger small mt-1">{{ form.data_hora.errors.0 }}</div>
+              {% endif %}
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Observações</label>
+              {{ form.observacoes }}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-boss px-4">
+              <i class="fas fa-check me-1"></i>Salvar Agendamento
+            </button>
+            <a href="{% url 'barbearia:agenda' %}" class="btn btn-outline-secondary">Cancelar</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% if agendamento %}
+    <div class="boss-card mt-3 p-3 d-flex align-items-center gap-3">
+      <a href="{{ agendamento.gerar_link_whatsapp }}" target="_blank" class="btn btn-wa px-3">
+        <i class="fab fa-whatsapp me-2"></i>Enviar Confirmação WhatsApp
+      </a>
+      <small class="text-muted">Link gerado automaticamente com os dados do agendamento.</small>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const API_HORARIOS   = "{% url 'barbearia:api_horarios' %}";
+const API_PRECO_BASE = "{% url 'barbearia:api_preco_servico' pk=0 %}".replace('/0/preco/', '/');
+const DIAS  = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+/* ── Gera strip dos próximos 7 dias ── */
+function gerarStrip() {
+  const strip = document.getElementById('day-strip');
+  strip.innerHTML = '';
+  const hoje = new Date();
+  hoje.setHours(0,0,0,0);
+
+  // Verifica se há data pré-selecionada (edição)
+  const valorAtual = document.getElementById('id_data_hora').value;
+  const dataPre = valorAtual ? valorAtual.split('T')[0] : null;
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(hoje);
+    d.setDate(hoje.getDate() + i);
+    const yyyy    = d.getFullYear();
+    const mm      = String(d.getMonth()+1).padStart(2,'0');
+    const dd      = String(d.getDate()).padStart(2,'0');
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'day-btn' + (dateStr === dataPre ? ' selected' : '');
+    btn.dataset.date = dateStr;
+    btn.innerHTML = `
+      <span class="day-name">${DIAS[d.getDay()]}</span>
+      <span class="day-num">${d.getDate()}</span>
+      <span class="day-mes">${MESES[d.getMonth()]}</span>
+    `;
+    btn.addEventListener('click', () => selecionarDia(btn, dateStr));
+    strip.appendChild(btn);
+  }
+
+  // Se editando e data está dentro dos 7 dias, carrega slots
+  if (dataPre) {
+    const botaoSel = strip.querySelector(`.day-btn[data-date="${dataPre}"]`);
+    if (botaoSel) carregarSlots(dataPre);
+  }
+}
+
+function selecionarDia(btn, dateStr) {
+  document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('id_data_hora').value = '';
+  document.getElementById('slot-escolhido').classList.remove('visivel');
+  carregarSlots(dateStr);
+}
+
+/* ── Carrega slots via API ── */
+async function carregarSlots(dateStr) {
+  const barbId = document.getElementById('id_barbeiro').value;
+  const svcId  = document.getElementById('id_servico').value;
+  const grid   = document.getElementById('slots-grid');
+  const wrap   = document.getElementById('wrap-slots');
+
+  if (!barbId || !svcId) {
+    wrap.innerHTML = '';
+    wrap.style.display = 'none';
+    return;
+  }
+
+  wrap.style.display = 'block';
+  grid.innerHTML = '<span class="text-muted" style="font-size:.82rem;"><i class="fas fa-spinner fa-spin me-1"></i>Carregando…</span>';
+
+  try {
+    const url   = `${API_HORARIOS}?start=${dateStr}&end=${dateStr}&servico=${svcId}&barbeiro=${barbId}`;
+    const slots = await fetch(url).then(r => r.json());
+
+    if (!slots.length) {
+      grid.innerHTML = '<span class="text-muted" style="font-size:.84rem;"><i class="fas fa-calendar-xmark me-1"></i>Nenhum horário disponível.</span>';
+      return;
+    }
+
+    const valorAtual = document.getElementById('id_data_hora').value;
+    grid.innerHTML = '';
+    slots.forEach(slot => {
+      const dt   = new Date(slot.start);
+      const hora = dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+      const btn  = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'slot-btn' + (slot.extendedProps.slot === valorAtual ? ' selected' : '');
+      btn.textContent = hora;
+      btn.dataset.slot = slot.extendedProps.slot;
+      btn.addEventListener('click', () => selecionarSlot(btn, slot));
+      grid.appendChild(btn);
+    });
+  } catch(e) {
+    grid.innerHTML = '<span class="text-danger" style="font-size:.82rem;">Erro ao carregar horários.</span>';
+  }
+}
+
+function selecionarSlot(btn, slot) {
+  document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+
+  const val = slot.extendedProps.slot;
+  document.getElementById('id_data_hora').value = val;
+  document.getElementById('input-manual').value  = val;
+
+  const dt  = new Date(slot.start);
+  const fmt = dt.toLocaleString('pt-BR', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+  document.getElementById('slot-texto').textContent = fmt;
+  document.getElementById('slot-escolhido').classList.add('visivel');
+}
+
+/* ── Toggle manual ── */
+let manualVisivel = false;
+function toggleManual() {
+  manualVisivel = !manualVisivel;
+  document.getElementById('wrap-manual').style.display = manualVisivel ? 'block' : 'none';
+  document.getElementById('toggle-manual').innerHTML = manualVisivel
+    ? '<i class="fas fa-calendar-alt me-1"></i>Usar seletor de dias'
+    : '<i class="fas fa-keyboard me-1"></i>Inserir data manualmente';
+}
+
+function preencherManual(val) {
+  document.getElementById('id_data_hora').value = val;
+  document.getElementById('slot-texto').textContent = new Date(val).toLocaleString('pt-BR', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+  document.getElementById('slot-escolhido').classList.add('visivel');
+  // Desmarca seleção visual dos botões
+  document.querySelectorAll('.day-btn, .slot-btn').forEach(b => b.classList.remove('selected'));
+}
+
+/* ── Recarrega slots ao trocar barbeiro ou serviço ── */
+function onBarbeiroServicoChange() {
+  const diaBtn = document.querySelector('.day-btn.selected');
+  if (diaBtn) carregarSlots(diaBtn.dataset.date);
+}
+document.getElementById('id_barbeiro').addEventListener('change', onBarbeiroServicoChange);
+document.getElementById('id_servico').addEventListener('change', onBarbeiroServicoChange);
+
+/* ── Auto-preenche preço ao selecionar serviço ── */
+const valorInput = document.getElementById('id_valor_cobrado');
+document.getElementById('id_servico').addEventListener('change', async function() {
+  const svcId = this.value;
+  if (!svcId) return;
+  try {
+    const data = await fetch(`${API_PRECO_BASE}${svcId}/preco/`).then(r => r.json());
+    if (!valorInput.value || valorInput.dataset.auto === '1') {
+      valorInput.value = data.preco;
+      valorInput.dataset.auto = '1';
+    }
+    document.getElementById('duracao-info').textContent = `⏱ Duração estimada: ${data.duracao_minutos} minutos`;
+  } catch(e) {}
+});
+if (valorInput) {
+  valorInput.addEventListener('input', () => { valorInput.dataset.auto = '0'; });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  gerarStrip();
+
+  // Se há data pré-preenchida (edição) além de 7 dias, mostra campo manual
+  const valorAtual = document.getElementById('id_data_hora').value;
+  if (valorAtual) {
+    const dataPre = new Date(valorAtual);
+    const hoje7   = new Date(); hoje7.setDate(hoje7.getDate() + 7);
+    if (dataPre > hoje7) {
+      toggleManual();
+      const fmt = dataPre.toLocaleString('pt-BR', {weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
+      document.getElementById('slot-texto').textContent = fmt;
+      document.getElementById('slot-escolhido').classList.add('visivel');
+    }
+  }
+});
+</script>
+{% endblock %}

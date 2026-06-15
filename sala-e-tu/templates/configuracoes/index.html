@@ -94,4 +94,48 @@
   </div>
 </div>
 
+<!-- BANCOS PIX -->
+<div style="margin-top:28px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <h2 style="font-size:1rem;font-weight:700;color:var(--texto);">🏦 Bancos para recebimento via PIX</h2>
+    <a href="{% url 'core:conf_banco_novo' %}" class="btn btn-verde">➕ Adicionar Banco</a>
+  </div>
+  <div class="panel">
+    <div class="panel-body">
+      {% if bancos %}
+      <div class="table-responsive">
+        <table class="saleetur-table">
+          <thead>
+            <tr><th>Nome do Banco</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for banco in bancos %}
+            <tr>
+              <td><strong>{{ banco.nome }}</strong></td>
+              <td style="display:flex;gap:6px;justify-content:flex-end;">
+                <a href="{% url 'core:conf_banco_editar' banco.pk %}" class="btn btn-outline btn-sm">✏️ Editar</a>
+                <form method="post" action="{% url 'core:conf_banco_excluir' banco.pk %}" style="display:inline;"
+                      onsubmit="return confirm('Remover {{ banco.nome }}?')">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger btn-sm">🗑️ Excluir</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">🏦</div>
+          <p>Nenhum banco cadastrado ainda.<br/>
+          <a href="{% url 'core:conf_banco_novo' %}" class="btn btn-verde" style="margin-top:14px;display:inline-flex;">
+            ➕ Adicionar Banco
+          </a></p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
 {% endblock %}

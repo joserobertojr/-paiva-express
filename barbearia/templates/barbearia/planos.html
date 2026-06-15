@@ -1,0 +1,110 @@
+{% extends 'barbearia/base.html' %}
+{% block title %}Planos — Boss Barbearia{% endblock %}
+{% block page_title %}Planos de Assinatura{% endblock %}
+
+{% block content %}
+<div class="sec-header mb-3">
+  <h2 class="sec-title">Planos Cadastrados</h2>
+  <div class="d-flex gap-2">
+    <a href="{% url 'barbearia:relatorio_planos' %}" class="btn btn-boss-outline btn-sm">
+      <i class="fas fa-chart-bar me-1"></i> Relatório
+    </a>
+    <a href="{% url 'barbearia:novo_plano' %}" class="btn btn-boss btn-sm">
+      <i class="fas fa-plus me-1"></i> Novo Plano
+    </a>
+  </div>
+</div>
+
+{# ── KPI RÁPIDO ── #}
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="kpi-card text-center">
+      <div class="kpi-value">{{ planos|length }}</div>
+      <div class="kpi-label">Planos Cadastrados</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="kpi-card text-center">
+      <div class="kpi-value">R$ {{ receita_total|floatformat:2 }}</div>
+      <div class="kpi-label">Receita Mensal Esperada (ativos)</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="kpi-card text-center">
+      {% with total_clientes=0 %}
+      <div class="kpi-value">{{ planos|length }}</div>
+      {% endwith %}
+      <div class="kpi-label">Tipos de Plano</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  {% for p in planos %}
+  <div class="col-md-6 col-xl-4">
+    <div class="boss-card p-0" style="border-top:4px solid {{ p.cor }};">
+      <div class="boss-card-body">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <h5 style="font-family:'Oswald',sans-serif;font-size:1.1rem;margin:0;">{{ p.nome }}</h5>
+            <div style="font-family:'Oswald',sans-serif;font-size:1.4rem;font-weight:700;color:var(--bb);">
+              R$ {{ p.preco_mensal|floatformat:2 }}<span style="font-size:.7rem;font-weight:400;color:#aaa;">/mês</span>
+            </div>
+          </div>
+          <div class="d-flex flex-column align-items-end gap-1">
+            {% if p.ativo %}
+              <span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:.7rem;">Ativo</span>
+            {% else %}
+              <span class="badge" style="background:#fce4ec;color:#b71c1c;font-size:.7rem;">Inativo</span>
+            {% endif %}
+            <span class="badge" style="background:{{ p.cor }};color:#000;font-size:.7rem;">
+              {{ p.num_clientes_ativos }} cliente{{ p.num_clientes_ativos|pluralize }}
+            </span>
+          </div>
+        </div>
+
+        {% if p.descricao %}
+        <p style="font-size:.82rem;color:#666;margin-bottom:.75rem;">{{ p.descricao|truncatechars:80 }}</p>
+        {% endif %}
+
+        {% if p.servicos.all %}
+        <div class="mb-3">
+          <small class="text-muted fw-semibold d-block mb-1">Serviços inclusos:</small>
+          <div class="d-flex flex-wrap gap-1">
+            {% for svc in p.servicos.all %}
+            <span class="badge" style="background:{{ p.cor }};color:#000;font-size:.7rem;font-weight:600;">{{ svc.nome }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+        <p style="font-size:.8rem;color:#aaa;margin-bottom:.75rem;"><em>Nenhum serviço incluído ainda.</em></p>
+        {% endif %}
+
+        <div class="d-flex gap-2 mt-auto">
+          <a href="{% url 'barbearia:editar_plano' p.pk %}" class="btn btn-boss-outline btn-sm flex-fill">
+            <i class="fas fa-edit me-1"></i> Editar
+          </a>
+          <form action="{% url 'barbearia:excluir_plano' p.pk %}" method="post"
+                onsubmit="return confirm('Excluir o plano {{ p.nome }}?');">
+            {% csrf_token %}
+            <button class="btn btn-sm" style="background:#fce4ec;color:#b71c1c;border:none;" type="submit">
+              <i class="fas fa-trash-alt"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <div class="boss-card text-center py-5">
+      <i class="fas fa-medal fa-3x mb-3" style="color:#ddd;"></i>
+      <h5 style="color:#aaa;">Nenhum plano cadastrado.</h5>
+      <a href="{% url 'barbearia:novo_plano' %}" class="btn btn-boss mt-2">
+        <i class="fas fa-plus me-1"></i> Criar Primeiro Plano
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

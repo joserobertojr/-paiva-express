@@ -1,0 +1,183 @@
+{% extends 'barbearia/base.html' %}
+{% block title %}Financeiro — Boss Barbearia{% endblock %}
+{% block page_title %}Financeiro{% endblock %}
+
+{% block content %}
+
+{# ── FILTRO DE PERÍODO ── #}
+<form method="get" class="boss-card p-3 mb-4">
+  <div class="d-flex flex-wrap gap-3 align-items-end">
+    <div>
+      <label class="form-label mb-1" style="font-size:.8rem;font-weight:600;">De</label>
+      <input type="date" name="data_inicio" class="form-control form-control-sm"
+             value="{{ data_inicio|date:'Y-m-d' }}" style="width:150px;">
+    </div>
+    <div>
+      <label class="form-label mb-1" style="font-size:.8rem;font-weight:600;">Até</label>
+      <input type="date" name="data_fim" class="form-control form-control-sm"
+             value="{{ data_fim|date:'Y-m-d' }}" style="width:150px;">
+    </div>
+    <button type="submit" class="btn btn-sm btn-boss">
+      <i class="fas fa-filter me-1"></i>Filtrar
+    </button>
+    {# Atalhos de período #}
+    <div class="d-flex gap-1 ms-1">
+      <a href="?data_inicio={{ hoje_primeiro }}&data_fim={{ hoje_ultimo }}" class="btn btn-sm btn-boss-outline">Este mês</a>
+      <a href="?data_inicio={{ semana_inicio }}&data_fim={{ semana_fim }}" class="btn btn-sm btn-boss-outline">Esta semana</a>
+      <a href="?data_inicio={{ hoje }}&data_fim={{ hoje }}" class="btn btn-sm btn-boss-outline">Hoje</a>
+    </div>
+    <div class="ms-auto">
+      <a href="{% url 'barbearia:nova_saida' %}" class="btn btn-sm btn-boss">
+        <i class="fas fa-plus me-1"></i>Lançar Despesa
+      </a>
+    </div>
+  </div>
+  <div class="mt-2" style="font-size:.78rem;color:#888;">
+    Exibindo: <strong>{{ data_inicio|date:"d/m/Y" }}</strong> até <strong>{{ data_fim|date:"d/m/Y" }}</strong>
+  </div>
+</form>
+
+{# ── KPIs ── #}
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#e8f5e9;"><i class="fas fa-arrow-trend-up" style="color:#2e7d32;"></i></div>
+      <div class="kpi-value" style="color:#2e7d32;">R$ {{ entradas|floatformat:2 }}</div>
+      <div class="kpi-label">Entradas (serviços concluídos)</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:#fce4ec;"><i class="fas fa-arrow-trend-down" style="color:#c62828;"></i></div>
+      <div class="kpi-value" style="color:#c62828;">R$ {{ total_saidas|floatformat:2 }}</div>
+      <div class="kpi-label">Saídas (despesas)</div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:{% if saldo >= 0 %}#e8f5e9{% else %}#fce4ec{% endif %};">
+        <i class="fas fa-scale-balanced" style="color:{% if saldo >= 0 %}#2e7d32{% else %}#c62828{% endif %};"></i>
+      </div>
+      <div class="kpi-value" style="color:{% if saldo >= 0 %}#2e7d32{% else %}#c62828{% endif %};">
+        R$ {{ saldo|floatformat:2 }}
+      </div>
+      <div class="kpi-label">Saldo Líquido</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  {# ── ENTRADAS ── #}
+  <div class="col-lg-7">
+    <div class="boss-card">
+      <div class="boss-card-header">
+        <span class="boss-card-title">
+          <i class="fas fa-arrow-up me-2" style="color:#2e7d32;"></i>Entradas — Serviços Concluídos
+        </span>
+        <span class="badge" style="background:#e8f5e9;color:#2e7d32;">{{ agendamentos_mes.count }} serviços</span>
+      </div>
+      {% if agendamentos_mes %}
+      <div class="table-responsive" style="max-height:400px;overflow-y:auto;">
+        <table class="table table-sm mb-0" style="font-size:.83rem;">
+          <thead style="background:#0a0a0a;position:sticky;top:0;">
+            <tr>
+              <th style="color:#FFD700;font-family:'Oswald',sans-serif;font-size:.7rem;letter-spacing:1px;border:none;padding:.6rem 1rem;">Data</th>
+              <th style="color:#FFD700;font-family:'Oswald',sans-serif;font-size:.7rem;letter-spacing:1px;border:none;">Cliente</th>
+              <th style="color:#FFD700;font-family:'Oswald',sans-serif;font-size:.7rem;letter-spacing:1px;border:none;">Barbeiro</th>
+              <th style="color:#FFD700;font-family:'Oswald',sans-serif;font-size:.7rem;letter-spacing:1px;border:none;">Serviço</th>
+              <th style="color:#FFD700;font-family:'Oswald',sans-serif;font-size:.7rem;letter-spacing:1px;border:none;text-align:right;">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ag in agendamentos_mes %}
+            <tr>
+              <td style="padding:.55rem 1rem;border-color:#f0f0f0;">{{ ag.data_hora|date:"d/m H:i" }}</td>
+              <td style="border-color:#f0f0f0;">{{ ag.cliente.nome }}</td>
+              <td style="border-color:#f0f0f0;">{{ ag.barbeiro.nome|default:"—" }}</td>
+              <td style="border-color:#f0f0f0;">{{ ag.servico.nome|default:"—" }}</td>
+              <td style="border-color:#f0f0f0;text-align:right;font-weight:600;color:#2e7d32;">
+                R$ {{ ag.valor_cobrado|floatformat:2 }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot style="background:#f9f9f9;font-weight:700;">
+            <tr>
+              <td colspan="4" style="padding:.55rem 1rem;border-color:#eee;color:#555;">Total do período</td>
+              <td style="text-align:right;color:#2e7d32;border-color:#eee;padding:.55rem 1rem;">
+                R$ {{ entradas|floatformat:2 }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center text-muted py-4">
+        <i class="fas fa-inbox fa-2x mb-2" style="color:#ddd;"></i>
+        <p class="mb-0">Nenhuma entrada neste período.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── DESPESAS ── #}
+  <div class="col-lg-5">
+    <div class="boss-card mb-3">
+      <div class="boss-card-header">
+        <span class="boss-card-title">
+          <i class="fas fa-arrow-down me-2" style="color:#c62828;"></i>Despesas por Categoria
+        </span>
+      </div>
+      <div class="boss-card-body p-0">
+        {% for cat in saidas_por_categoria %}
+        <div class="d-flex align-items-center justify-content-between px-3 py-2" style="border-bottom:1px solid #f5f5f5;">
+          <span style="font-size:.85rem;text-transform:capitalize;">{{ cat.categoria }}</span>
+          <strong style="color:#c62828;">R$ {{ cat.total|floatformat:2 }}</strong>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-3" style="font-size:.85rem;">Nenhuma despesa neste período.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="boss-card">
+      <div class="boss-card-header">
+        <span class="boss-card-title">
+          <i class="fas fa-receipt me-2" style="color:#c62828;"></i>Lançamentos de Despesas
+        </span>
+        <a href="{% url 'barbearia:nova_saida' %}" class="btn btn-sm btn-boss"><i class="fas fa-plus"></i></a>
+      </div>
+      <div style="max-height:300px;overflow-y:auto;">
+        {% if saidas_qs %}
+        <table class="table table-sm mb-0" style="font-size:.82rem;">
+          <tbody>
+            {% for s in saidas_qs %}
+            <tr>
+              <td style="padding:.5rem 1rem;border-color:#f5f5f5;">
+                <div style="font-weight:600;">{{ s.descricao }}</div>
+                <div style="font-size:.72rem;color:#999;">{{ s.data|date:"d/m/Y" }} · {{ s.get_categoria_display }}</div>
+              </td>
+              <td style="text-align:right;border-color:#f5f5f5;vertical-align:middle;">
+                <strong style="color:#c62828;">R$ {{ s.valor|floatformat:2 }}</strong>
+              </td>
+              <td style="border-color:#f5f5f5;vertical-align:middle;width:40px;">
+                <form method="post" action="{% url 'barbearia:excluir_saida' s.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger p-1" style="font-size:.65rem;"
+                          onclick="return confirm('Excluir despesa?')">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-3" style="font-size:.85rem;">Sem despesas lançadas.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

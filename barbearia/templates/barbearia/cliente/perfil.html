@@ -1,0 +1,63 @@
+{% extends 'barbearia/cliente/base.html' %}
+{% block title %}Meu Perfil — Boss Barbearia{% endblock %}
+
+{% block content %}
+<h4 style="font-family:'Oswald',sans-serif;margin-bottom:1.25rem;"><i class="fas fa-user-cog me-2" style="color:#FFD700;"></i>Meu Perfil</h4>
+
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="c-card">
+      <div class="c-card-body">
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger mb-3">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Nome Completo *</label>
+              {{ form.nome }}
+              {% if form.nome.errors %}<small class="text-danger">{{ form.nome.errors.0 }}</small>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label"><i class="fab fa-whatsapp me-1" style="color:#25D366;"></i>WhatsApp *</label>
+              {{ form.telefone }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Login do sistema</label>
+              <input type="text" class="form-control" value="{{ request.user.username }}" disabled>
+            </div>
+          </div>
+
+          <hr style="margin:1.5rem 0;border-color:#f0f0f0;">
+          <h6 style="font-family:'Oswald',sans-serif;color:#666;font-size:.85rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:1rem;">
+            <i class="fas fa-lock me-2"></i>Alterar Senha (opcional)
+          </h6>
+
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label">Senha Atual</label>
+              {{ form.senha_atual }}
+              {% if form.senha_atual.errors %}<small class="text-danger">{{ form.senha_atual.errors.0 }}</small>{% endif %}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nova Senha</label>
+              {{ form.nova_senha }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Confirmar Nova Senha</label>
+              {{ form.nova_senha2 }}
+              {% if form.nova_senha2.errors %}<small class="text-danger">{{ form.nova_senha2.errors.0 }}</small>{% endif %}
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-boss w-100 mt-4 py-2">
+            <i class="fas fa-check me-2"></i>Salvar Alterações
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

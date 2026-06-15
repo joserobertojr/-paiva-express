@@ -1,0 +1,74 @@
+{% extends 'barbearia/cliente/base.html' %}
+{% block title %}Meu Painel — Boss Barbearia{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+<div style="background:linear-gradient(135deg,#0a0a0a 0%,#1a1a1a 100%);border-radius:16px;padding:2rem;margin-bottom:1.5rem;border:1px solid rgba(255,215,0,.15);">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+      <h2 style="font-family:'Oswald',sans-serif;color:#FFD700;font-size:1.6rem;margin:0;">
+        Olá, {{ request.user.first_name|default:request.user.username }}! ✂
+      </h2>
+      <p style="color:rgba(255,255,255,.5);font-size:.88rem;margin:.25rem 0 0;">Bem-vindo ao seu portal de agendamentos.</p>
+    </div>
+    <a href="{% url 'barbearia:cliente_agendar' %}" class="btn btn-boss btn-lg px-4">
+      <i class="fas fa-calendar-plus me-2"></i>AGENDAR AGORA
+    </a>
+  </div>
+</div>
+
+<!-- PRÓXIMOS AGENDAMENTOS -->
+<div class="c-card mb-3">
+  <div class="c-card-header">
+    <span class="c-card-title"><i class="fas fa-calendar-check me-2" style="color:#FFD700;"></i>Próximos Agendamentos</span>
+    <a href="{% url 'barbearia:cliente_meus_agendamentos' %}" style="font-size:.82rem;color:#FFD700;text-decoration:none;">Ver todos →</a>
+  </div>
+  {% if proximos %}
+  <div>
+    {% for ag in proximos %}
+    <div style="padding:1rem 1.25rem;{% if not forloop.last %}border-bottom:1px solid #f5f5f5;{% endif %}display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <div style="background:#0a0a0a;border-radius:10px;padding:.6rem .9rem;text-align:center;min-width:60px;">
+        <div style="font-family:'Oswald',sans-serif;color:#FFD700;font-size:1.2rem;line-height:1;">{{ ag.data_hora|date:"d" }}</div>
+        <div style="color:rgba(255,255,255,.5);font-size:.65rem;text-transform:uppercase;letter-spacing:1px;">{{ ag.data_hora|date:"M" }}</div>
+      </div>
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:.95rem;">{{ ag.servico.nome|default:"Serviço" }}</div>
+        <div style="font-size:.8rem;color:#999;">{{ ag.data_hora|time:"H:i" }}h &nbsp;·&nbsp; {{ ag.barbeiro.nome|default:"Barbeiro" }}</div>
+      </div>
+      <div>
+        <span class="badge-status s-{{ ag.status }}">{{ ag.get_status_display }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="c-card-body text-center py-4">
+    <i class="fas fa-calendar-xmark fa-2x mb-2" style="color:#ddd;"></i>
+    <p class="text-muted mb-0" style="font-size:.88rem;">Nenhum agendamento futuro. Que tal marcar um?</p>
+    <a href="{% url 'barbearia:cliente_agendar' %}" class="btn btn-boss btn-sm mt-2">Agendar agora</a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- QUICK LINKS -->
+<div class="row g-3">
+  <div class="col-4">
+    <a href="{% url 'barbearia:cliente_agendar' %}" class="c-card d-block text-center p-3 text-decoration-none" style="transition:transform .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+      <i class="fas fa-calendar-plus fa-2x mb-2" style="color:#FFD700;"></i>
+      <div style="font-family:'Oswald',sans-serif;font-size:.9rem;color:#0a0a0a;">Agendar</div>
+    </a>
+  </div>
+  <div class="col-4">
+    <a href="{% url 'barbearia:cliente_meus_agendamentos' %}" class="c-card d-block text-center p-3 text-decoration-none" style="transition:transform .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+      <i class="fas fa-history fa-2x mb-2" style="color:#666;"></i>
+      <div style="font-family:'Oswald',sans-serif;font-size:.9rem;color:#0a0a0a;">Histórico</div>
+    </a>
+  </div>
+  <div class="col-4">
+    <a href="{% url 'barbearia:cliente_perfil' %}" class="c-card d-block text-center p-3 text-decoration-none" style="transition:transform .2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+      <i class="fas fa-user-cog fa-2x mb-2" style="color:#666;"></i>
+      <div style="font-family:'Oswald',sans-serif;font-size:.9rem;color:#0a0a0a;">Meu Perfil</div>
+    </a>
+  </div>
+</div>
+{% endblock %}

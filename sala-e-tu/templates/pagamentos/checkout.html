@@ -86,6 +86,22 @@
           <input type="hidden" name="forma" id="forma-input" />
         </div>
 
+        <!-- BANCO PIX (só PIX) -->
+        <div class="form-group" id="banco-pix-group" style="display:none;margin-bottom:14px;">
+          <label>Banco <span style="color:red">*</span></label>
+          <select name="banco_pix" id="banco-pix-select" class="form-control">
+            <option value="">— Selecione o banco —</option>
+            {% for b in bancos_pix %}
+            <option value="{{ b.pk }}">{{ b.nome }}</option>
+            {% endfor %}
+          </select>
+          {% if not bancos_pix %}
+          <small style="color:var(--cinza-3);">
+            Nenhum banco cadastrado. <a href="{% url 'core:conf_banco_novo' %}">Cadastrar agora</a>
+          </small>
+          {% endif %}
+        </div>
+
         <!-- PARCELAS (só cartão) -->
         <div class="form-group" id="parcelas-group" style="display:none;margin-bottom:14px;">
           <label>Número de Parcelas <span style="color:red">*</span></label>
@@ -129,6 +145,12 @@
           </div>
         </div>
 
+        <!-- DATA DO PAGAMENTO -->
+        <div class="form-group" style="margin-bottom:14px;">
+          <label>Data do Pagamento <span style="color:red">*</span></label>
+          <input type="date" name="data_pagamento" class="form-control" value="{{ hoje }}" required />
+        </div>
+
         <div class="form-group" style="margin-bottom:16px;">
           <label>Observação</label>
           <input type="text" name="observacoes" class="form-control" placeholder="Opcional" />
@@ -150,7 +172,7 @@
       <div class="panel-body">
         <table class="saleetur-table">
           <thead>
-            <tr><th>#</th><th>Forma</th><th>Parcelas</th><th>Vendedor</th><th>Valor</th><th>Data</th><th>Recibo</th></tr>
+            <tr><th>#</th><th>Forma</th><th>Banco/Parcelas</th><th>Vendedor</th><th>Valor</th><th>Data</th><th>Recibo</th></tr>
           </thead>
           <tbody>
             {% for p in pagamentos %}
@@ -161,11 +183,13 @@
                 {{ p.get_forma_display }}
               </td>
               <td style="text-align:center;">
-                {% if p.forma == 'cartao_credito' %}{{ p.parcelas|default:1 }}x{% else %}—{% endif %}
+                {% if p.forma == 'cartao_credito' %}{{ p.parcelas|default:1 }}x
+                {% elif p.forma == 'pix' %}{{ p.banco_pix.nome|default:"—" }}
+                {% else %}—{% endif %}
               </td>
               <td>{{ p.vendedor.nome|default:"—" }}</td>
               <td><strong style="color:var(--verde);">R$ {{ p.valor|floatformat:2 }}</strong></td>
-              <td style="font-size:.8rem;color:var(--cinza-3);">{{ p.registrado_em|date:"d/m/Y H:i" }}</td>
+              <td style="font-size:.8rem;color:var(--cinza-3);">{{ p.data_pagamento|date:"d/m/Y" }}</td>
               <td>
                 <a href="{% url 'pagamentos:recibo' p.pk %}" target="_blank"
                    class="btn btn-outline btn-sm" title="Imprimir recibo">
@@ -233,9 +257,12 @@ const saldoTotal = parseFloat('{{ saldo|floatformat:2 }}'.replace(',', '.'));
 function selPag(el) {
   document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
   el.classList.add('selected');
-  document.getElementById('forma-input').value = el.dataset.value;
-  const isCartao = el.dataset.value === 'cartao_credito';
+  const forma = el.dataset.value;
+  document.getElementById('forma-input').value = forma;
+  const isCartao = forma === 'cartao_credito';
+  const isPix = forma === 'pix';
   document.getElementById('parcelas-group').style.display = isCartao ? 'flex' : 'none';
+  document.getElementById('banco-pix-group').style.display = isPix ? 'flex' : 'none';
   if (!isCartao) document.getElementById('parcelas-preview').style.display = 'none';
   calcSaldo(document.getElementById('valor-input').value);
 }

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Boss Barbearia{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bb: #0a0a0a;
+      --bb2: #1a1a1a;
+      --by: #FFD700;
+      --byd: #d4af00;
+      --bw: #ffffff;
+      --bg: #f4f5f7;
+      --border: #e2e5ea;
+      --sw: 260px;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: 'Open Sans', sans-serif; background: var(--bg); color: #2d3748; overflow-x: hidden; margin: 0; }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0; width: var(--sw);
+      background: var(--bb); color: #fff; z-index: 1000;
+      display: flex; flex-direction: column; overflow-y: auto;
+      transition: transform .3s;
+    }
+    #sidebar::-webkit-scrollbar { width: 4px; }
+    #sidebar::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+    .sb-brand {
+      padding: 1.4rem 1.25rem 1.2rem;
+      border-bottom: 1px solid rgba(255,215,0,.15);
+      text-decoration: none; display: flex; align-items: center; gap: .75rem;
+    }
+    .sb-brand .scissors { font-size: 1.8rem; color: var(--by); }
+    .sb-brand .brand-name { font-family: 'Oswald', sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--by); letter-spacing: 1px; display: block; line-height: 1.1; }
+    .sb-brand .brand-sub { font-size: .6rem; color: rgba(255,255,255,.4); letter-spacing: 3px; text-transform: uppercase; }
+
+    .sb-section { font-size: .62rem; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,.3); padding: 1.2rem 1.25rem .4rem; font-weight: 600; }
+
+    .sb-nav .nav-link {
+      color: rgba(255,255,255,.65); padding: .65rem 1.25rem;
+      display: flex; align-items: center; gap: .7rem; font-size: .855rem;
+      border-left: 3px solid transparent; transition: all .18s;
+    }
+    .sb-nav .nav-link:hover { color: #fff; background: rgba(255,215,0,.07); border-left-color: rgba(255,215,0,.4); }
+    .sb-nav .nav-link.active { color: var(--by); background: rgba(255,215,0,.1); border-left-color: var(--by); font-weight: 600; }
+    .sb-nav .nav-icon { width: 18px; text-align: center; font-size: .95rem; }
+    .sb-notif-count { margin-left: auto; background: var(--by); color: #000; border-radius: 10px; font-size: .6rem; font-weight: 700; padding: 1px 6px; }
+
+    .sb-footer { padding: 1rem 1.25rem; border-top: 1px solid rgba(255,255,255,.08); margin-top: auto; }
+    .sb-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--by); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #000; font-family: 'Oswald', sans-serif; font-size: 1rem; flex-shrink: 0; }
+    .sb-user-name { font-weight: 600; color: #fff; font-size: .85rem; }
+    .sb-user-role { color: var(--by); font-size: .65rem; text-transform: uppercase; letter-spacing: 1px; }
+    .btn-logout { background: rgba(255,255,255,.08); color: rgba(255,255,255,.65); border: none; font-size: .8rem; width: 100%; border-radius: 6px; padding: .4rem; margin-top: .6rem; transition: background .2s; }
+    .btn-logout:hover { background: rgba(255,255,255,.15); color: #fff; }
+
+    /* ── MAIN ── */
+    #main { margin-left: var(--sw); min-height: 100vh; transition: margin .3s; display: flex; flex-direction: column; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      background: var(--bw); border-bottom: 1px solid var(--border);
+      padding: .8rem 1.5rem; display: flex; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .page-heading { font-family: 'Oswald', sans-serif; font-size: 1.2rem; font-weight: 600; color: var(--bb); margin: 0; }
+    .topbar-right { display: flex; align-items: center; gap: 1rem; }
+    .notif-btn { position: relative; background: none; border: none; color: #666; font-size: 1.15rem; padding: .45rem .55rem; border-radius: 50%; transition: background .2s; cursor: pointer; text-decoration: none; display: flex; }
+    .notif-btn:hover { background: var(--bg); color: var(--bb); }
+    .notif-dot { position: absolute; top: 2px; right: 2px; background: var(--by); color: #000; border-radius: 50%; font-size: .58rem; font-weight: 700; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bw); }
+    .topbar-user { font-size: .82rem; color: #666; }
+
+    /* ── CONTENT ── */
+    .content { padding: 1.5rem; flex: 1; }
+
+    /* ── KPI CARDS ── */
+    .kpi-card { background: var(--bw); border-radius: 12px; padding: 1.4rem; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,.04); transition: transform .2s; }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.08); }
+    .kpi-icon { width: 46px; height: 46px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; margin-bottom: .9rem; }
+    .kpi-value { font-family: 'Oswald', sans-serif; font-size: 1.7rem; font-weight: 700; color: var(--bb); line-height: 1; }
+    .kpi-label { font-size: .72rem; color: #999; text-transform: uppercase; letter-spacing: .8px; margin-top: .2rem; }
+
+    /* ── CARDS ── */
+    .boss-card { background: var(--bw); border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,.04); overflow: hidden; }
+    .boss-card-header { padding: .9rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .boss-card-title { font-family: 'Oswald', sans-serif; font-size: 1rem; font-weight: 600; color: var(--bb); margin: 0; }
+    .boss-card-body { padding: 1.25rem; }
+
+    /* ── TABLE ── */
+    .boss-table { background: var(--bw); border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,.04); overflow: hidden; }
+    .boss-table .table { margin: 0; }
+    .boss-table .table thead th { background: var(--bb); color: var(--by); font-family: 'Oswald', sans-serif; font-size: .75rem; text-transform: uppercase; letter-spacing: 1.2px; border: none; padding: .85rem 1rem; font-weight: 500; }
+    .boss-table .table tbody td { padding: .8rem 1rem; border-color: var(--border); vertical-align: middle; font-size: .87rem; }
+    .boss-table .table tbody tr:hover { background: rgba(255,215,0,.03); }
+
+    /* ── STATUS BADGES ── */
+    .badge-status { border-radius: 20px; font-size: .7rem; padding: .3rem .7rem; font-weight: 600; }
+    .s-agendado { background: #e3f2fd; color: #1565c0; }
+    .s-confirmado { background: #e8f5e9; color: #2e7d32; }
+    .s-em_atendimento { background: #fff8e1; color: #e65100; }
+    .s-concluido { background: var(--bb); color: var(--by); }
+    .s-cancelado { background: #fce4ec; color: #b71c1c; }
+    .s-faltou { background: #f3e5f5; color: #6a1b9a; }
+
+    /* ── BUTTONS ── */
+    .btn-boss { background: var(--by); color: #000; border: none; font-weight: 700; font-family: 'Oswald', sans-serif; letter-spacing: .3px; transition: all .2s; }
+    .btn-boss:hover { background: var(--byd); color: #000; transform: translateY(-1px); }
+    .btn-boss-outline { border: 2px solid var(--by); color: var(--bb); background: transparent; font-weight: 600; transition: all .2s; }
+    .btn-boss-outline:hover { background: var(--by); color: #000; }
+    .btn-wa { background: #25D366; color: #fff; border: none; font-size: .78rem; transition: background .2s; }
+    .btn-wa:hover { background: #1da851; color: #fff; }
+
+    /* ── FORMS ── */
+    .form-label { font-weight: 600; font-size: .83rem; color: #444; margin-bottom: .35rem; }
+    .form-control:focus, .form-select:focus { border-color: var(--by); box-shadow: 0 0 0 .2rem rgba(255,215,0,.2); }
+
+    /* ── SECTION HEADER ── */
+    .sec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+    .sec-title { font-family: 'Oswald', sans-serif; font-size: 1.05rem; font-weight: 600; color: var(--bb); margin: 0; }
+
+    /* ── MESSAGES ── */
+    .msg-wrap { padding: 0 1.5rem .25rem; }
+    .alert { border: none; border-radius: 8px; font-size: .875rem; }
+    .alert-error { background: #fce4ec; color: #b71c1c; }
+
+    /* ── CHART ── */
+    .chart-wrap { position: relative; height: 240px; }
+
+    /* ── MOBILE ── */
+    .btn-sb-toggle { display: none; background: none; border: none; font-size: 1.1rem; color: var(--bb); padding: .3rem .5rem; }
+    @media (max-width: 768px) {
+      #sidebar { transform: translateX(-100%); }
+      #sidebar.open { transform: translateX(0); }
+      #main { margin-left: 0; }
+      .btn-sb-toggle { display: block; }
+    }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<div id="sidebar">
+  <a href="{% url 'barbearia:dashboard' %}" class="sb-brand">
+    <span class="scissors"><i class="fas fa-scissors"></i></span>
+    <div>
+      <span class="brand-name">BOSS</span>
+      <span class="brand-sub">Barbearia</span>
+    </div>
+  </a>
+
+  <span class="sb-section">Principal</span>
+  <nav class="sb-nav">
+    <a href="{% url 'barbearia:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <span class="sb-nav-icon"><i class="fas fa-chart-pie"></i></span> Dashboard
+    </a>
+    {% if user_perm.agenda or user_perm.master %}
+    <a href="{% url 'barbearia:agenda' %}" class="nav-link {% if 'agenda' in request.resolver_match.url_name %}active{% endif %}">
+      <span class="sb-nav-icon"><i class="fas fa-calendar-check"></i></span> Agenda
+    </a>
+    {% endif %}
+  </nav>
+
+  <span class="sb-section">Gestão</span>
+  <nav class="sb-nav">
+    {% if user_perm.clientes or user_perm.master %}
+    <a href="{% url 'barbearia:clientes' %}" class="nav-link {% if 'cliente' in request.resolver_match.url_name %}active{% endif %}">
+      <span class="sb-nav-icon"><i class="fas fa-users"></i></span> Clientes
+    </a>
+    {% endif %}
+    {% if user_perm.financeiro or user_perm.master %}
+    <a href="{% url 'barbearia:financeiro' %}" class="nav-link {% if 'financeiro' in request.resolver_match.url_name or 'saida' in request.resolver_match.url_name %}active{% endif %}">
+      <span class="sb-nav-icon"><i class="fas fa-cash-register"></i></span> Financeiro
+    </a>
+    {% endif %}
+    {% if user_perm.barbeiros or user_perm.master %}
+    <a href="{% url 'barbearia:barbeiros' %}" class="nav-link {% if 'barbeiro' in request.resolver_match.url_name %}active{% endif %}">
+      <span class="sb-nav-icon"><i class="fas fa-cut"></i></span> Barbeiros
+    </a>
+    {% endif %}
+    {% if user_perm.planos or user_perm.master %}
+    <a href="{% url 'barbearia:planos' %}" class="nav-link {% if 'plano' in request.resolver_match.url_name %}active{% endif %}">
+      <span class="sb-nav-icon"><i class="fas fa-medal"></i></span> Planos
+    </a>
+    {% endif %}
+    {% if user_perm.servicos or user_perm.master %}
+    <a href="{% url 'barbearia:servicos' %}" class="nav-link {% if 'servico' in request.resolver_match.url_name %}active{% endif %}">
+      <span class="sb-nav-icon"><i class="fas fa-scissors"></i></span> Serviços
+    </a>
+    {% endif %}
+  </nav>
+
+  <span class="sb-section">Sistema</span>
+  <nav class="sb-nav">
+    <a href="{% url 'barbearia:notificacoes' %}" class="nav-link {% if 'notificacoes' in request.resolver_match.url_name %}active{% endif %}">
+      <span class="sb-nav-icon"><i class="fas fa-bell"></i></span> Notificações
+      {% if notif_nao_lidas > 0 %}<span class="sb-notif-count">{{ notif_nao_lidas }}</span>{% endif %}
+    </a>
+    <a href="{% url 'barbearia:lembretes' %}" class="nav-link {% if 'lembretes' in request.resolver_match.url_name %}active{% endif %}">
+      <span class="sb-nav-icon"><i class="fab fa-whatsapp"></i></span> Lembretes WhatsApp
+    </a>
+    {% if user_perm.agenda or user_perm.master %}
+    <a href="{% url 'barbearia:bloquear_horario' %}" class="nav-link {% if 'bloqueio' in request.resolver_match.url_name %}active{% endif %}">
+      <span class="sb-nav-icon"><i class="fas fa-lock"></i></span> Bloquear Horário
+    </a>
+    {% endif %}
+    {% if user_perm.configuracoes or user_perm.master %}
+    <a href="{% url 'barbearia:configuracoes_usuarios' %}" class="nav-link {% if 'configuracoes' in request.resolver_match.url_name %}active{% endif %}">
+      <span class="sb-nav-icon"><i class="fas fa-cog"></i></span> Configurações
+    </a>
+    {% endif %}
+  </nav>
+
+  <div class="sb-footer">
+    <div class="d-flex align-items-center gap-2">
+      <div class="sb-avatar">{{ request.user.username|first|upper }}</div>
+      <div>
+        <div class="sb-user-name">{{ request.user.username }}</div>
+        {% if user_perm.master %}<div class="sb-user-role">Master</div>
+        {% elif user_perm %}<div class="sb-user-role">Funcionário</div>{% endif %}
+      </div>
+    </div>
+    <a href="{% url 'barbearia:logout' %}" class="btn-logout mt-2 d-block text-center">
+      <i class="fas fa-sign-out-alt me-1"></i> Sair do sistema
+    </a>
+  </div>
+</div>
+
+<div id="main">
+  <div class="topbar">
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn-sb-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+        <i class="fas fa-bars"></i>
+      </button>
+      <h1 class="page-heading">{% block page_title %}Boss Barbearia{% endblock %}</h1>
+    </div>
+    <div class="topbar-right">
+      <a href="{% url 'barbearia:notificacoes' %}" class="notif-btn">
+        <i class="fas fa-bell"></i>
+        {% if notif_nao_lidas > 0 %}<span class="notif-dot">{{ notif_nao_lidas }}</span>{% endif %}
+      </a>
+      <span class="topbar-user d-none d-md-block">{{ request.user.get_full_name|default:request.user.username }}</span>
+    </div>
+  </div>
+
+  {% if messages %}
+  <div class="msg-wrap mt-3">
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show" role="alert">
+      <i class="fas fa-{% if msg.tags == 'success' %}check-circle text-success{% elif 'error' in msg.tags %}exclamation-circle text-danger{% else %}info-circle{% endif %} me-2"></i>
+      {{ msg }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="content">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  setTimeout(() => document.querySelectorAll('.alert').forEach(a => bootstrap.Alert.getOrCreateInstance(a).close()), 5000);
+
+  // Máscara de telefone/whatsapp — aplica em todos os campos com esses nomes
+  document.addEventListener('DOMContentLoaded', function() {
+    function aplicarMascaraTel(el) {
+      el.setAttribute('maxlength', '15');
+      if (!el.placeholder || el.placeholder === '') el.placeholder = '(83) 99999-9999';
+      el.addEventListener('input', function(e) {
+        let v = e.target.value.replace(/\D/g, '');
+        if (v.length > 11) v = v.slice(0, 11);
+        if (v.length > 7)
+          v = '(' + v.slice(0,2) + ') ' + v.slice(2,7) + '-' + v.slice(7);
+        else if (v.length > 2)
+          v = '(' + v.slice(0,2) + ') ' + v.slice(2);
+        else if (v.length > 0)
+          v = '(' + v;
+        e.target.value = v;
+      });
+    }
+    document.querySelectorAll(
+      'input[name="telefone"], input[name="whatsapp"], input[name="telefone_cliente"]'
+    ).forEach(aplicarMascaraTel);
+  });
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

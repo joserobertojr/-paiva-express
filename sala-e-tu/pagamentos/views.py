@@ -1,3 +1,4 @@
+import datetime
 from decimal import Decimal, InvalidOperation
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -9,7 +10,7 @@ from vendedores.models import Vendedor
 from core.decorators import admin_required
 from core.audit import log as audit_log
 from core.models import AuditLog
-from .models import Pagamento
+from .models import Pagamento, BancoPix
 
 FORMA_LABELS = {
     'pix': 'PIX',
@@ -26,6 +27,7 @@ def checkout(request, pk):
     saldo = reserva.valor_total - total_pago
     percentual = int((total_pago / reserva.valor_total * 100)) if reserva.valor_total > 0 else 0
     vendedores = Vendedor.objects.filter(ativo=True)
+    bancos_pix = BancoPix.objects.filter(ativo=True)
 
     if request.method == 'POST':
         forma = request.POST.get('forma')
@@ -42,6 +44,16 @@ def checkout(request, pk):
             except (ValueError, TypeError):
                 parcelas = 1
 
+        banco_pix_id = None
+        if forma == 'pix':
+            banco_pix_id = request.POST.get('banco_pix') or None
+
+        data_raw = request.POST.get('data_pagamento', '')
+        try:
+            data_pagamento = datetime.date.fromisoformat(data_raw) if data_raw else datetime.date.today()
+        except ValueError:
+            data_pagamento = datetime.date.today()
+
         vendedor_id = request.POST.get('vendedor') or None
         observacoes = request.POST.get('observacoes', '')
 
@@ -52,8 +64,10 @@ def checkout(request, pk):
                 forma=forma,
                 valor=valor_efetivo,
                 parcelas=parcelas,
+                banco_pix_id=banco_pix_id,
                 vendedor_id=vendedor_id,
                 observacoes=observacoes,
+                data_pagamento=data_pagamento,
             )
             audit_log(request, AuditLog.ACAO_CRIAR, 'Pagamentos',
                       f'Registrou pagamento R$ {valor_efetivo:.2f} ({FORMA_LABELS.get(forma, forma)}) '
@@ -77,9 +91,11 @@ def checkout(request, pk):
         'passageiros': passageiros,
         'pagamentos': pagamentos,
         'vendedores': vendedores,
+        'bancos_pix': bancos_pix,
         'total_pago': total_pago,
         'saldo': saldo,
         'percentual': min(percentual, 100),
+        'hoje': datetime.date.today().isoformat(),
     })
 
 

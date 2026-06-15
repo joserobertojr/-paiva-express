@@ -1,0 +1,62 @@
+{% extends 'barbearia/base.html' %}
+{% block title %}Serviços — Boss Barbearia{% endblock %}
+{% block page_title %}Serviços{% endblock %}
+
+{% block content %}
+<div class="sec-header mb-3">
+  <span class="sec-title"><i class="fas fa-scissors me-2" style="color:#FFD700;"></i>Tabela de Serviços</span>
+  <a href="{% url 'barbearia:novo_servico' %}" class="btn btn-boss"><i class="fas fa-plus me-1"></i>Novo Serviço</a>
+</div>
+
+{% if servicos %}
+<div class="boss-table">
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <th>Serviço</th>
+        <th>Descrição</th>
+        <th>Duração</th>
+        <th>Preço</th>
+        <th>Status</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in servicos %}
+      <tr>
+        <td><strong>{{ s.nome }}</strong></td>
+        <td style="font-size:.85rem;color:#666;max-width:250px;">{{ s.descricao|truncatechars:60|default:"—" }}</td>
+        <td><i class="fas fa-clock me-1" style="color:#aaa;"></i>{{ s.duracao_minutos }} min</td>
+        <td><strong style="color:#2e7d32;font-family:'Oswald',sans-serif;font-size:1.05rem;">R$ {{ s.preco|floatformat:2 }}</strong></td>
+        <td>
+          {% if s.ativo %}
+          <span class="badge-status s-confirmado">Ativo</span>
+          {% else %}
+          <span class="badge-status s-cancelado">Inativo</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{% url 'barbearia:editar_servico' s.pk %}" class="btn btn-sm btn-boss me-1">
+            <i class="fas fa-pen me-1"></i>Editar
+          </a>
+          <form method="post" action="{% url 'barbearia:excluir_servico' s.pk %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Excluir o serviço \'{{ s.nome }}\'?')">
+              <i class="fas fa-trash"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="text-muted mt-2" style="font-size:.8rem;">{{ servicos.count }} serviço{{ servicos.count|pluralize:"s" }} cadastrado{{ servicos.count|pluralize:"s" }}.</div>
+{% else %}
+<div class="boss-card text-center py-5">
+  <i class="fas fa-scissors fa-3x mb-3" style="color:#ddd;"></i>
+  <h5 style="color:#aaa;">Nenhum serviço cadastrado.</h5>
+  <a href="{% url 'barbearia:novo_servico' %}" class="btn btn-boss mt-2"><i class="fas fa-plus me-1"></i>Criar Primeiro Serviço</a>
+</div>
+{% endif %}
+{% endblock %}
