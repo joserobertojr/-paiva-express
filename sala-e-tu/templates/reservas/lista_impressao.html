@@ -47,6 +47,47 @@
       margin-right: 2px;
     }
 
+    /* Passageiro Free */
+    .tr-free td { background: #F3E5F5; }
+    .tr-free .td-acomp-nome { background: #EDE7F6; }
+    .free-badge {
+      display: inline-block;
+      background: #9C27B0;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 8px;
+      margin-left: 5px;
+      vertical-align: middle;
+      letter-spacing: .5px;
+    }
+
+    /* Separador de seção Free */
+    .tr-free-header td {
+      background: #9C27B0;
+      color: #fff;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 6px 12px;
+      border-bottom: none;
+    }
+
+    /* Resumo de totais */
+    .totais-box {
+      margin-top: 20px;
+      border: 1px solid #E0E0E0;
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 12.5px;
+    }
+    .totais-box table { margin: 0; }
+    .totais-box thead tr { background: #1B5E20; }
+    .totais-box tbody td { padding: 8px 14px; }
+    .totais-box tfoot td { background: #E8F5E9; font-weight: 700; padding: 8px 14px; }
+
     .rodape {
       margin-top: 40px;
       border-top: 2px solid #1B5E20; padding-top: 16px;
@@ -83,7 +124,12 @@
       Destino: {{ pacote.destino }} &nbsp;·&nbsp;
       {{ pacote.data_saida|date:"d/m/Y" }} a {{ pacote.data_retorno|date:"d/m/Y" }}
       {% if pacote.duracao_dias %}({{ pacote.duracao_dias }} dias){% endif %}
-      <br/>Total: {{ total_passageiros }} passageiro{{ total_passageiros|pluralize }}
+      <br/>
+      Total: <strong>{{ total_passageiros }} passageiro{{ total_passageiros|pluralize }}</strong>
+      {% if total_free %}
+        &nbsp;·&nbsp; Pagantes: <strong>{{ total_pagantes }}</strong>
+        &nbsp;·&nbsp; <span style="color:#9C27B0;font-weight:700;">🎁 Free: {{ total_free }}</span>
+      {% endif %}
     </div>
   {% else %}
     <div class="viagem-nome">{{ reserva.pacote.titulo }}</div>
@@ -110,24 +156,27 @@
   {% if pacote %}
     {# Modo agrupado por reserva #}
     {% for reserva in reservas %}
-      {% with paxs=reserva.passageiros.all %}
+      {% with paxs=reserva.passageiros.all is_free=reserva.eh_gratuito_pre %}
       {% if paxs %}
         {% if not forloop.first %}
         <tr class="tr-sep"><td colspan="5"></td></tr>
         {% endif %}
+        {% if is_free %}
+        <tr class="tr-free-header"><td colspan="5">🎁 Free — Reserva #{{ reserva.pk }}</td></tr>
+        {% endif %}
         {% for pax in paxs %}
           {% if pax.principal %}
-          <tr class="tr-principal">
+          <tr class="tr-principal{% if is_free %} tr-free{% endif %}">
             <td class="num-col">{{ forloop.parentloop.counter }}</td>
-            <td><strong>{{ pax.cliente.nome }}</strong></td>
+            <td><strong>{{ pax.cliente.nome }}</strong>{% if is_free %}<span class="free-badge">FREE</span>{% endif %}</td>
             <td>{{ pax.cliente.telefone|default:"—" }}</td>
             <td>{{ pax.cliente.doc_formatado }}</td>
             <td>{{ pax.cliente.data_nascimento|date:"d/m/Y"|default:"—" }}</td>
           </tr>
           {% else %}
-          <tr class="tr-acomp">
+          <tr class="tr-acomp{% if is_free %} tr-free{% endif %}">
             <td class="num-col"></td>
-            <td class="td-acomp-nome">{{ pax.cliente.nome }}</td>
+            <td class="td-acomp-nome">{{ pax.cliente.nome }}{% if is_free %}<span class="free-badge">FREE</span>{% endif %}</td>
             <td>{{ pax.cliente.telefone|default:"—" }}</td>
             <td>{{ pax.cliente.doc_formatado }}</td>
             <td>{{ pax.cliente.data_nascimento|date:"d/m/Y"|default:"—" }}</td>

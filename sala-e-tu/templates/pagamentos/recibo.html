@@ -151,6 +151,11 @@
       <td><strong>Saldo Devedor</strong></td>
       <td style="color:#E65100;font-weight:700;">R$ {{ reserva.saldo_devedor|floatformat:2 }}</td>
     </tr>
+    {% elif reserva.eh_gratuito %}
+    <tr>
+      <td><strong>Situação</strong></td>
+      <td style="color:#6A1B9A;font-weight:700;">🎁 Free</td>
+    </tr>
     {% else %}
     <tr>
       <td><strong>Situação</strong></td>

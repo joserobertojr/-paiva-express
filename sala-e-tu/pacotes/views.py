@@ -7,8 +7,11 @@ from .forms import PacoteForm
 
 @login_required
 def lista(request):
+    q = request.GET.get('q', '')
     pacotes = Pacote.objects.filter(ativo=True)
-    return render(request, 'pacotes/lista.html', {'pacotes': pacotes})
+    if q:
+        pacotes = pacotes.filter(titulo__icontains=q)
+    return render(request, 'pacotes/lista.html', {'pacotes': pacotes, 'q': q})
 
 
 @login_required

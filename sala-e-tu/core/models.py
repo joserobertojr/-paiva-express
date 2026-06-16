@@ -13,6 +13,7 @@ SECOES = [
     ('clientes',      'Clientes'),
     ('reservas',      'Reservas'),
     ('pagamentos',    'Pagamentos'),
+    ('cartoes',       'Cartões Aprovados'),
     ('pacotes',       'Pacotes'),
     ('vendedores',    'Vendedores'),
     ('relatorios',    'Relatórios'),
@@ -28,6 +29,7 @@ class PerfilUsuario(models.Model):
     perm_clientes      = models.BooleanField('Clientes', default=True)
     perm_reservas      = models.BooleanField('Reservas', default=True)
     perm_pagamentos    = models.BooleanField('Pagamentos', default=True)
+    perm_cartoes       = models.BooleanField('Cartões Aprovados', default=False)
     perm_pacotes       = models.BooleanField('Pacotes', default=False)
     perm_vendedores    = models.BooleanField('Vendedores', default=False)
     perm_relatorios    = models.BooleanField('Relatórios', default=False)

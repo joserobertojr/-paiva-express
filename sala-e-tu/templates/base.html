@@ -46,6 +46,16 @@
           <a href="{% url 'pagamentos:lista' %}"><span class="nav-icon">💳</span> Pagamentos</a>
         </li>
         {% endif %}
+        {% if user_perms.cartoes %}
+        <li class="nav-item {% if 'cartoes' in request.path %}active{% endif %}">
+          <a href="{% url 'cartoes:lista' %}"><span class="nav-icon">🃏</span> Cartões Aprovados</a>
+        </li>
+        {% endif %}
+        {% if eh_admin %}
+        <li class="nav-item">
+          <a href="{% url 'core:backup' %}"><span class="nav-icon">💾</span> Backup</a>
+        </li>
+        {% endif %}
       </ul>
 
       {% if user_perms.vendedores or user_perms.pacotes or user_perms.relatorios or user_perms.configuracoes %}

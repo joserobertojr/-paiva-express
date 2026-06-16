@@ -37,10 +37,16 @@ class Reserva(models.Model):
     @property
     def total_pago(self):
         from django.db.models import Sum
-        return self.pagamentos.aggregate(s=Sum('valor'))['s'] or 0
+        return self.pagamentos.exclude(forma='gratuito').aggregate(s=Sum('valor'))['s'] or 0
+
+    @property
+    def eh_gratuito(self):
+        return self.pagamentos.filter(forma='gratuito').exists()
 
     @property
     def saldo_devedor(self):
+        if self.eh_gratuito:
+            return 0
         return self.valor_total - self.total_pago
 
 

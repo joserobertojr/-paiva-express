@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block title %}Cartões Aprovados{% endblock %}
+{% block page_title %}Cartões Aprovados{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>🃏 Cartões Aprovados</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a>
+      <span class="breadcrumb-sep">/</span> Cartões Aprovados
+    </div>
+  </div>
+  <button class="btn btn-verde" onclick="document.getElementById('modal-novo').classList.add('open')">➕ Novo Registro</button>
+</div>
+
+{% if messages %}
+{% for msg in messages %}
+<div style="background:{% if msg.tags == 'success' %}#E8F5E9{% else %}#FFEBEE{% endif %};border-left:4px solid {% if msg.tags == 'success' %}#2E7D32{% else %}#C62828{% endif %};padding:12px 16px;border-radius:0 6px 6px 0;margin-bottom:16px;font-size:.9rem;">
+  {{ msg }}
+</div>
+{% endfor %}
+{% endif %}
+
+<div class="panel" style="margin-bottom:16px;">
+  <div class="panel-body" style="padding:14px 20px;">
+    <form method="get" style="display:flex;gap:10px;align-items:center;">
+      <input type="search" name="origem" value="{{ origem }}" placeholder="Filtrar por origem..."
+             style="flex:1;padding:9px 14px;border:1.5px solid #ECEFF1;border-radius:8px;font-size:.9rem;outline:none;" />
+      <button type="submit" class="btn btn-verde btn-sm">🔍 Filtrar</button>
+      {% if origem %}<a href="{% url 'cartoes:lista' %}" class="btn btn-outline btn-sm">✕ Limpar</a>{% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="panel-body">
+    {% if cartoes %}
+    <div class="table-responsive">
+      <table class="saleetur-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Bandeira</th>
+            <th>Titular</th>
+            <th>Número</th>
+            <th>Validade</th>
+            <th>Valor</th>
+            <th>Parc.</th>
+            <th>Origem</th>
+            <th>Destino</th>
+            <th>Status</th>
+            <th>Comp.</th>
+            <th style="text-align:center;width:90px;">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in cartoes %}
+          <tr>
+            <td>{{ c.data|date:"d/m/Y" }}</td>
+            <td>
+              {% if c.bandeira == 'visa' %}<span style="color:#1A1F71;font-weight:700;">VISA</span>
+              {% elif c.bandeira == 'mastercard' %}<span style="color:#EB001B;font-weight:700;">Master</span>
+              {% elif c.bandeira == 'elo' %}<span style="color:#00A4E0;font-weight:700;">Elo</span>
+              {% elif c.bandeira == 'amex' %}<span style="color:#007BC1;font-weight:700;">Amex</span>
+              {% elif c.bandeira == 'hipercard' %}<span style="color:#B02020;font-weight:700;">Hiper</span>
+              {% else %}{{ c.get_bandeira_display }}{% endif %}
+            </td>
+            <td><strong>{{ c.titular }}</strong></td>
+            <td style="font-family:monospace;font-size:.85rem;">{{ c.numero }}</td>
+            <td>{{ c.validade }}</td>
+            <td>R$ {{ c.valor|floatformat:2 }}</td>
+            <td>{{ c.parcelas }}x</td>
+            <td>{{ c.origem }}</td>
+            <td>{{ c.destino }}</td>
+            <td>
+              {% if c.status == 'aprovado' %}
+                <span style="background:#E8F5E9;color:#2E7D32;padding:3px 10px;border-radius:12px;font-size:.78rem;font-weight:700;white-space:nowrap;">✓ Aprovado</span>
+              {% elif c.status == 'pendente' %}
+                <span style="background:#FFF8E1;color:#F57F17;padding:3px 10px;border-radius:12px;font-size:.78rem;font-weight:700;white-space:nowrap;">⏳ Pendente</span>
+              {% elif c.status == 'cancelado' %}
+                <span style="background:#FAFAFA;color:#757575;padding:3px 10px;border-radius:12px;font-size:.78rem;font-weight:700;white-space:nowrap;">✕ Cancelado</span>
+              {% elif c.status == 'recusado' %}
+                <span style="background:#FFEBEE;color:#C62828;padding:3px 10px;border-radius:12px;font-size:.78rem;font-weight:700;white-space:nowrap;">✕ Recusado</span>
+              {% elif c.status == 'contestado' %}
+                <span style="background:#F3E5F5;color:#6A1B9A;padding:3px 10px;border-radius:12px;font-size:.78rem;font-weight:700;white-space:nowrap;">⚠ Contestado</span>
+              {% endif %}
+            </td>
+            <td style="text-align:center;">
+              {% if c.comprovante %}
+                <a href="{{ c.comprovante.url }}" target="_blank" class="btn btn-outline btn-sm">📄</a>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              <div style="display:flex;justify-content:center;gap:4px;">
+                <a href="{% url 'cartoes:editar' c.pk %}" class="btn btn-outline btn-sm" title="Editar">✏️</a>
+                <form method="post" action="{% url 'cartoes:excluir' c.pk %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-danger btn-sm" title="Excluir"
+                          onclick="return confirm('Remover este registro?')">🗑️</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🃏</div>
+      <p>Nenhum cartão registrado ainda.</p>
+      <button class="btn btn-verde" style="margin-top:14px;"
+              onclick="document.getElementById('modal-novo').classList.add('open')">➕ Adicionar</button>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ── MODAL: Novo Registro ── -->
+<div class="modal-overlay" id="modal-novo">
+  <div class="modal-box" style="max-width:640px;">
+    <div class="modal-header">
+      <h3>➕ Novo Cartão Aprovado</h3>
+      <button class="modal-close" onclick="document.getElementById('modal-novo').classList.remove('open')">✕</button>
+    </div>
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="novo" value="1">
+      <div class="modal-body">
+        {% if form.errors %}
+        <div style="background:#FFEBEE;border-left:4px solid #C62828;padding:10px 14px;border-radius:0 6px 6px 0;font-size:.85rem;color:#B71C1C;margin-bottom:12px;">
+          Corrija os erros abaixo.
+        </div>
+        {% endif %}
+        <div class="form-grid" style="gap:12px;">
+
+          <div class="form-group">
+            <label>Data *</label>
+            {% render_field form.data class="form-control" %}
+            {{ form.data.errors }}
+          </div>
+          <div class="form-group">
+            <label>Bandeira *</label>
+            {% render_field form.bandeira class="form-control" %}
+            {{ form.bandeira.errors }}
+          </div>
+
+          <div class="form-group full">
+            <label>Titular *</label>
+            {% render_field form.titular class="form-control" placeholder="Nome impresso no cartão" %}
+            {{ form.titular.errors }}
+          </div>
+
+          <div class="form-group">
+            <label>Número do Cartão *</label>
+            {% render_field form.numero class="form-control" placeholder="0000 0000 0000 0000" id="m-numero" maxlength="19" %}
+            {{ form.numero.errors }}
+          </div>
+          <div class="form-group">
+            <label>Validade *</label>
+            {% render_field form.validade class="form-control" placeholder="MM/AAAA" id="m-validade" maxlength="7" %}
+            {{ form.validade.errors }}
+          </div>
+
+          <div class="form-group">
+            <label>Valor (R$) *</label>
+            {% render_field form.valor class="form-control" placeholder="0,00" %}
+            {{ form.valor.errors }}
+          </div>
+          <div class="form-group">
+            <label>CID *</label>
+            {% render_field form.cid class="form-control" placeholder="000" maxlength="4" %}
+            {{ form.cid.errors }}
+          </div>
+
+          <div class="form-group">
+            <label>Parcelas *</label>
+            {% render_field form.parcelas class="form-control" %}
+            {{ form.parcelas.errors }}
+          </div>
+          <div class="form-group">
+            <label>Status *</label>
+            {% render_field form.status class="form-control" %}
+            {{ form.status.errors }}
+          </div>
+
+          <div class="form-group">
+            <label>Origem *</label>
+            {% render_field form.origem class="form-control" placeholder="Ex: João Pessoa" %}
+            {{ form.origem.errors }}
+          </div>
+          <div class="form-group">
+            <label>Destino *</label>
+            {% render_field form.destino class="form-control" placeholder="Ex: Cancún" %}
+            {{ form.destino.errors }}
+          </div>
+
+          <div class="form-group full">
+            <label>Comprovante (PDF/imagem)</label>
+            {% render_field form.comprovante class="form-control" accept=".pdf,.jpg,.jpeg,.png" %}
+            {{ form.comprovante.errors }}
+          </div>
+
+        </div>
+      </div>
+      <div style="padding:16px 24px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--cinza-1);">
+        <button type="button" class="btn btn-outline"
+                onclick="document.getElementById('modal-novo').classList.remove('open')">Cancelar</button>
+        <button type="submit" class="btn btn-verde">💾 Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Abrir modal com erros de validação
+  {% if form.errors %}
+  document.getElementById('modal-novo').classList.add('open');
+  {% endif %}
+
+  // Fechar ao clicar fora
+  document.getElementById('modal-novo').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+
+  // Máscara número do cartão
+  const mNum = document.getElementById('m-numero');
+  if (mNum) {
+    mNum.addEventListener('input', function() {
+      let v = this.value.replace(/\D/g, '').slice(0, 16);
+      this.value = v.replace(/(.{4})/g, '$1 ').trim();
+    });
+  }
+
+  // Máscara validade MM/AAAA
+  const mVal = document.getElementById('m-validade');
+  if (mVal) {
+    mVal.addEventListener('input', function() {
+      let v = this.value.replace(/\D/g, '').slice(0, 6);
+      if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+      this.value = v;
+    });
+  }
+</script>
+{% endblock %}

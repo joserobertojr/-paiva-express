@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Excluir Pagamento #{{ pagamento.pk }}{% endblock %}
+{% block page_title %}Excluir Pagamento{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>🗑️ Excluir Pagamento #{{ pagamento.pk }}</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a>
+      <span class="breadcrumb-sep">/</span>
+      <a href="{% url 'pagamentos:checkout' reserva.pk %}">Pagamento Reserva #{{ reserva.pk }}</a>
+      <span class="breadcrumb-sep">/</span> Excluir
+    </div>
+  </div>
+</div>
+
+<div class="form-card" style="max-width:480px;">
+  <div style="text-align:center;padding:24px 0 16px;">
+    <div style="font-size:3rem;margin-bottom:12px;">⚠️</div>
+    <h2 style="color:var(--cinza-1);margin-bottom:8px;">Confirmar exclusão</h2>
+    <p style="color:var(--cinza-3);margin-bottom:20px;">
+      Tem certeza que deseja excluir este pagamento? Esta ação não pode ser desfeita.
+    </p>
+    <div style="background:var(--cinza-bg);border-radius:10px;padding:16px;text-align:left;margin-bottom:24px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="color:var(--cinza-3);font-size:.85rem;">Forma</span>
+        <strong>{{ pagamento.get_forma_display }}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="color:var(--cinza-3);font-size:.85rem;">Valor</span>
+        <strong style="color:var(--verde);">R$ {{ pagamento.valor|floatformat:2 }}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="color:var(--cinza-3);font-size:.85rem;">Data</span>
+        <strong>{{ pagamento.data_pagamento|date:"d/m/Y" }}</strong>
+      </div>
+    </div>
+    <form method="post" style="display:flex;gap:10px;">
+      {% csrf_token %}
+      <button type="submit" class="btn" style="flex:1;justify-content:center;background:#FFEBEE;color:#C62828;border:1px solid #EF9A9A;">
+        🗑️ Sim, excluir
+      </button>
+      <a href="{% url 'pagamentos:checkout' reserva.pk %}" class="btn btn-outline" style="flex:1;justify-content:center;">
+        Cancelar
+      </a>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

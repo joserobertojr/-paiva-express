@@ -35,6 +35,7 @@
       <div class="stat-sub">reservas do mês atual</div>
     </div>
   </div>
+  {% if eh_admin %}
   <div class="stat-card laranja-mid">
     <div class="stat-icon">💰</div>
     <div class="stat-info">
@@ -43,6 +44,7 @@
       <div class="stat-sub">em pagamentos recebidos</div>
     </div>
   </div>
+  {% endif %}
 </div>
 
 <div class="dashboard-grid">
@@ -118,14 +120,4 @@
   </div>
 </div>
 
-<div class="panel">
-  <div class="panel-header"><div class="panel-title"><span class="dot"></span> Ações Rápidas</div></div>
-  <div class="panel-body" style="padding:20px;display:flex;gap:12px;flex-wrap:wrap;">
-    <a href="{% url 'vendedores:cadastrar' %}" class="btn btn-outline">🧑‍💼 Cadastrar Vendedor</a>
-    <a href="{% url 'clientes:cadastrar' %}"   class="btn btn-verde">👤 Novo Cliente</a>
-    <a href="{% url 'pacotes:criar' %}"         class="btn btn-verde">🗺️ Novo Pacote</a>
-    <a href="{% url 'reservas:criar' %}"        class="btn btn-laranja">✈️ Nova Reserva</a>
-    <a href="{% url 'pagamentos:lista' %}"      class="btn btn-outline">💳 Ver Pagamentos</a>
-  </div>
-</div>
 {% endblock %}

@@ -27,8 +27,11 @@ def checkout(request, pk):
     totals = pags_financeiros.aggregate(s=Sum('valor'), d=Sum('desconto'))
     total_pago = totals['s'] or Decimal('0')
     total_desconto = totals['d'] or Decimal('0')
-    saldo = reserva.valor_total - total_pago - total_desconto
+    tem_gratuito = pagamentos.filter(forma='gratuito').exists()
+    saldo = Decimal('0') if tem_gratuito else reserva.valor_total - total_pago - total_desconto
     percentual = int(((total_pago + total_desconto) / reserva.valor_total * 100)) if reserva.valor_total > 0 else 0
+    if tem_gratuito:
+        percentual = 100
     vendedores = Vendedor.objects.filter(ativo=True)
     bancos_pix = BancoPix.objects.filter(ativo=True)
 
@@ -66,6 +69,8 @@ def checkout(request, pk):
         except InvalidOperation:
             desconto = Decimal('0')
 
+        comprovante = request.FILES.get('comprovante') or None
+
         if forma == 'gratuito':
             # Quita a reserva sem valor financeiro
             Pagamento.objects.create(
@@ -75,6 +80,7 @@ def checkout(request, pk):
                 data_pagamento=data_pagamento,
                 vendedor_id=vendedor_id,
                 observacoes=observacoes or 'Gratuito',
+                comprovante=comprovante,
             )
             reserva.status = 'confirmada'
             reserva.save()
@@ -94,6 +100,7 @@ def checkout(request, pk):
                 observacoes=observacoes,
                 data_pagamento=data_pagamento,
                 desconto=desconto,
+                comprovante=comprovante,
             )
             audit_log(request, AuditLog.ACAO_CRIAR, 'Pagamentos',
                       f'Registrou pagamento R$ {valor_efetivo:.2f} ({FORMA_LABELS.get(forma, forma)}) '
@@ -137,6 +144,97 @@ def recibo(request, pk):
         'reserva': pagamento.reserva,
         'passageiro_principal': passageiro_principal,
         'data_impressao': timezone.now(),
+    })
+
+
+@login_required
+def pagamento_editar(request, pk):
+    pagamento = get_object_or_404(Pagamento.objects.select_related('reserva'), pk=pk)
+    reserva = pagamento.reserva
+    bancos_pix = BancoPix.objects.filter(ativo=True)
+    vendedores = Vendedor.objects.filter(ativo=True)
+
+    if request.method == 'POST':
+        forma = request.POST.get('forma', pagamento.forma)
+        raw = request.POST.get('valor', '0').replace(',', '.')
+        try:
+            valor = Decimal(raw)
+        except InvalidOperation:
+            valor = pagamento.valor
+
+        parcelas = pagamento.parcelas
+        if forma == 'cartao_credito':
+            try:
+                parcelas = int(request.POST.get('parcelas', 1))
+            except (ValueError, TypeError):
+                parcelas = 1
+        else:
+            parcelas = None
+
+        banco_pix_id = None
+        if forma == 'pix':
+            banco_pix_id = request.POST.get('banco_pix') or None
+
+        data_raw = request.POST.get('data_pagamento', '')
+        try:
+            data_pagamento = datetime.date.fromisoformat(data_raw) if data_raw else pagamento.data_pagamento
+        except ValueError:
+            data_pagamento = pagamento.data_pagamento
+
+        try:
+            desconto = Decimal(request.POST.get('desconto', '0').replace(',', '.'))
+            if desconto < 0:
+                desconto = Decimal('0')
+        except InvalidOperation:
+            desconto = pagamento.desconto
+
+        pagamento.forma = forma
+        pagamento.valor = valor if forma != 'gratuito' else Decimal('0')
+        pagamento.parcelas = parcelas
+        pagamento.banco_pix_id = banco_pix_id
+        pagamento.vendedor_id = request.POST.get('vendedor') or None
+        pagamento.observacoes = request.POST.get('observacoes', '')
+        pagamento.data_pagamento = data_pagamento
+        pagamento.desconto = desconto if forma != 'gratuito' else Decimal('0')
+
+        if 'comprovante' in request.FILES:
+            pagamento.comprovante = request.FILES['comprovante']
+
+        pagamento.save()
+        audit_log(request, AuditLog.ACAO_EDITAR, 'Pagamentos',
+                  f'Editou pagamento #{pagamento.pk} da reserva #{reserva.pk}')
+        messages.success(request, 'Pagamento atualizado.')
+        return redirect('pagamentos:checkout', pk=reserva.pk)
+
+    return render(request, 'pagamentos/editar.html', {
+        'pagamento': pagamento,
+        'reserva': reserva,
+        'bancos_pix': bancos_pix,
+        'vendedores': vendedores,
+    })
+
+
+@login_required
+def pagamento_excluir(request, pk):
+    pagamento = get_object_or_404(Pagamento.objects.select_related('reserva'), pk=pk)
+    reserva = pagamento.reserva
+    if request.method == 'POST':
+        pagamento.delete()
+        # Se a reserva não tem mais pagamentos gratuitos e saldo > 0, volta p/ pendente
+        if not reserva.pagamentos.filter(forma='gratuito').exists():
+            pags = reserva.pagamentos.exclude(forma='gratuito').aggregate(s=Sum('valor'), d=Sum('desconto'))
+            total = (pags['s'] or Decimal('0')) + (pags['d'] or Decimal('0'))
+            if total < reserva.valor_total:
+                reserva.status = 'pendente'
+                reserva.save()
+        audit_log(request, AuditLog.ACAO_EXCLUIR, 'Pagamentos',
+                  f'Excluiu pagamento #{pk} da reserva #{reserva.pk}')
+        messages.success(request, 'Pagamento excluído.')
+        return redirect('pagamentos:checkout', pk=reserva.pk)
+
+    return render(request, 'pagamentos/confirmar_exclusao.html', {
+        'pagamento': pagamento,
+        'reserva': reserva,
     })
 
 

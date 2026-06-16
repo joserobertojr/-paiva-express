@@ -1,9 +1,16 @@
+import io
+import os
+import zipfile
+from datetime import datetime
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import Sum
+from django.http import HttpResponse
 from django.utils import timezone
+from django.conf import settings
 from clientes.models import Cliente
 from pacotes.models import Pacote
 from reservas.models import Reserva
@@ -223,3 +230,25 @@ def conf_banco_excluir(request, pk):
         audit_log(request, AuditLog.ACAO_EXCLUIR, 'Configurações', f'Removeu banco PIX: {nome}')
         messages.success(request, f'Banco "{nome}" removido.')
     return redirect('core:configuracoes')
+
+
+@login_required
+@admin_required
+def backup(request):
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        db_path = settings.DATABASES['default']['NAME']
+        if os.path.exists(db_path):
+            zf.write(db_path, 'db.sqlite3')
+        media_root = str(settings.MEDIA_ROOT)
+        if os.path.exists(media_root):
+            for root, dirs, files in os.walk(media_root):
+                for f in files:
+                    fp = os.path.join(root, f)
+                    zf.write(fp, os.path.join('media', os.path.relpath(fp, media_root)))
+    buf.seek(0)
+    nome = f'saleetur_backup_{datetime.now().strftime("%Y%m%d_%H%M%S")}.zip'
+    resp = HttpResponse(buf.read(), content_type='application/zip')
+    resp['Content-Disposition'] = f'attachment; filename="{nome}"'
+    audit_log(request, AuditLog.ACAO_CRIAR, 'Sistema', 'Gerou backup completo do sistema')
+    return resp

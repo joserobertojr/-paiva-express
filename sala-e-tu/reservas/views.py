@@ -96,19 +96,40 @@ def gestao_pacote(request, pk):
 
 @login_required
 def lista_impressao_pacote(request, pk):
+    from pagamentos.models import Pagamento
     pacote = get_object_or_404(Pacote, pk=pk)
-    reservas = Reserva.objects.filter(
+    reservas = list(Reserva.objects.filter(
         pacote=pacote
     ).exclude(status='cancelada').prefetch_related(
         Prefetch(
             'passageiros',
             queryset=PassageiroReserva.objects.select_related('cliente').order_by('-principal', 'cliente__nome')
-        )
-    ).order_by('pk')
+        ),
+        Prefetch('pagamentos'),
+    ).order_by('pk'))
+
+    # Pré-computa quais reservas são gratuitas para evitar N+1
+    ids_gratuitos = set(
+        Pagamento.objects.filter(
+            reserva__in=reservas, forma='gratuito'
+        ).values_list('reserva_id', flat=True)
+    )
+    for r in reservas:
+        r.eh_gratuito_pre = r.pk in ids_gratuitos
+
+    total_passageiros = sum(r.passageiros.count() for r in reservas)
+    total_free = sum(
+        r.passageiros.count() for r in reservas if r.eh_gratuito_pre
+    )
+    total_pagantes = total_passageiros - total_free
+
     return render(request, 'reservas/lista_impressao.html', {
         'pacote': pacote,
         'reservas': reservas,
         'data_impressao': timezone.now(),
+        'total_passageiros': total_passageiros,
+        'total_free': total_free,
+        'total_pagantes': total_pagantes,
     })
 
 
@@ -231,6 +252,30 @@ def remover_passageiro(request, pk):
 
 
 # ── Impressão por reserva individual (usada no checkout) ─────────────────────
+
+@login_required
+def editar_reserva(request, pk):
+    from decimal import Decimal, InvalidOperation
+    reserva = get_object_or_404(Reserva.objects.select_related('pacote', 'vendedor'), pk=pk)
+    vendedores = Vendedor.objects.filter(ativo=True)
+
+    if request.method == 'POST':
+        raw_valor = request.POST.get('valor_total', '0').replace(',', '.')
+        try:
+            reserva.valor_total = Decimal(raw_valor)
+        except InvalidOperation:
+            pass
+        reserva.vendedor_id = request.POST.get('vendedor') or None
+        reserva.observacoes = request.POST.get('observacoes', '')
+        reserva.save()
+        messages.success(request, 'Venda atualizada com sucesso.')
+        return redirect('reservas:gestao_pacote', pk=reserva.pacote.pk)
+
+    return render(request, 'reservas/editar_reserva.html', {
+        'reserva': reserva,
+        'vendedores': vendedores,
+    })
+
 
 @login_required
 def lista_impressao(request, pk):

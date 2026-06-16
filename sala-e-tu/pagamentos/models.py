@@ -21,7 +21,7 @@ class Pagamento(models.Model):
         ('pix', 'PIX'),
         ('dinheiro', 'Dinheiro'),
         ('cartao_credito', 'Cartão de Crédito'),
-        ('gratuito', 'Gratuito'),
+        ('gratuito', 'Free'),
     ]
     PARCELAS = [(i, f'{i}x') for i in range(1, 13)]
 
@@ -38,6 +38,7 @@ class Pagamento(models.Model):
         null=True, blank=True, related_name='pagamentos_recebidos', verbose_name='Vendedor Responsável'
     )
     desconto = models.DecimalField('Desconto (R$)', max_digits=10, decimal_places=2, default=0)
+    comprovante = models.FileField('Comprovante', upload_to='pagamentos/comprovantes/', null=True, blank=True)
     observacoes = models.TextField('Observações', blank=True)
     data_pagamento = models.DateField('Data do Pagamento', default=datetime.date.today)
     registrado_em = models.DateTimeField(auto_now_add=True)

@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}Editar Pagamento #{{ pagamento.pk }}{% endblock %}
+{% block page_title %}Editar Pagamento{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>✏️ Editar Pagamento #{{ pagamento.pk }}</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a>
+      <span class="breadcrumb-sep">/</span>
+      <a href="{% url 'pagamentos:checkout' reserva.pk %}">Pagamento Reserva #{{ reserva.pk }}</a>
+      <span class="breadcrumb-sep">/</span> Editar
+    </div>
+  </div>
+  <a href="{% url 'pagamentos:checkout' reserva.pk %}" class="btn btn-outline">← Voltar</a>
+</div>
+
+<div class="form-card" style="max-width:560px;">
+  <div class="form-header">
+    <div class="form-header-icon">✏️</div>
+    <div><div class="form-title">Editar Pagamento</div></div>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    <!-- FORMA -->
+    <div style="margin-bottom:16px;">
+      <label style="font-size:.82rem;font-weight:700;color:var(--cinza-3);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:10px;">Forma de Pagamento</label>
+      <div class="payment-methods" style="grid-template-columns:repeat(4,1fr);">
+        <div class="payment-method {% if pagamento.forma == 'pix' %}selected{% endif %}" data-value="pix" onclick="selPag(this)">
+          <div class="pm-icon">⚡</div><div class="pm-label">PIX</div>
+        </div>
+        <div class="payment-method {% if pagamento.forma == 'dinheiro' %}selected{% endif %}" data-value="dinheiro" onclick="selPag(this)">
+          <div class="pm-icon">💵</div><div class="pm-label">Dinheiro</div>
+        </div>
+        <div class="payment-method {% if pagamento.forma == 'cartao_credito' %}selected{% endif %}" data-value="cartao_credito" onclick="selPag(this)">
+          <div class="pm-icon">💳</div><div class="pm-label">Cartão de Crédito</div>
+        </div>
+        <div class="payment-method {% if pagamento.forma == 'gratuito' %}selected{% endif %}" data-value="gratuito" onclick="selPag(this)">
+          <div class="pm-icon">🎁</div><div class="pm-label">Free</div>
+        </div>
+      </div>
+      <input type="hidden" name="forma" id="forma-input" value="{{ pagamento.forma }}" />
+    </div>
+
+    <!-- AVISO GRATUITO -->
+    <div id="gratuito-aviso" style="display:{% if pagamento.forma == 'gratuito' %}block{% else %}none{% endif %};margin-bottom:14px;padding:14px 16px;background:#F3E5F5;border-left:4px solid #9C27B0;border-radius:0 8px 8px 0;">
+      <strong style="color:#6A1B9A;">🎁 Passagem Free</strong><br/>
+      <span style="font-size:.85rem;color:#7B1FA2;">A reserva será marcada como quitada sem nenhum valor financeiro registrado.</span>
+    </div>
+
+    <!-- BANCO PIX -->
+    <div class="form-group" id="banco-pix-group" style="display:{% if pagamento.forma == 'pix' %}flex{% else %}none{% endif %};margin-bottom:14px;">
+      <label>Banco</label>
+      <select name="banco_pix" class="form-control">
+        <option value="">— Selecione o banco —</option>
+        {% for b in bancos_pix %}
+        <option value="{{ b.pk }}" {% if pagamento.banco_pix_id == b.pk %}selected{% endif %}>{{ b.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- PARCELAS -->
+    <div class="form-group" id="parcelas-group" style="display:{% if pagamento.forma == 'cartao_credito' %}flex{% else %}none{% endif %};margin-bottom:14px;">
+      <label>Número de Parcelas</label>
+      <select name="parcelas" id="parcelas-select" class="form-control">
+        <option value="1"  {% if pagamento.parcelas == 1  %}selected{% endif %}>1x (à vista)</option>
+        <option value="2"  {% if pagamento.parcelas == 2  %}selected{% endif %}>2x</option>
+        <option value="3"  {% if pagamento.parcelas == 3  %}selected{% endif %}>3x</option>
+        <option value="4"  {% if pagamento.parcelas == 4  %}selected{% endif %}>4x</option>
+        <option value="5"  {% if pagamento.parcelas == 5  %}selected{% endif %}>5x</option>
+        <option value="6"  {% if pagamento.parcelas == 6  %}selected{% endif %}>6x</option>
+        <option value="7"  {% if pagamento.parcelas == 7  %}selected{% endif %}>7x</option>
+        <option value="8"  {% if pagamento.parcelas == 8  %}selected{% endif %}>8x</option>
+        <option value="9"  {% if pagamento.parcelas == 9  %}selected{% endif %}>9x</option>
+        <option value="10" {% if pagamento.parcelas == 10 %}selected{% endif %}>10x</option>
+        <option value="11" {% if pagamento.parcelas == 11 %}selected{% endif %}>11x</option>
+        <option value="12" {% if pagamento.parcelas == 12 %}selected{% endif %}>12x</option>
+      </select>
+    </div>
+
+    <!-- VENDEDOR -->
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>Vendedor Responsável</label>
+      <select name="vendedor" class="form-control">
+        <option value="">— Nenhum —</option>
+        {% for v in vendedores %}
+        <option value="{{ v.pk }}" {% if pagamento.vendedor_id == v.pk %}selected{% endif %}>{{ v.nome }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- VALOR -->
+    <div class="form-group" id="valor-group" style="display:{% if pagamento.forma == 'gratuito' %}none{% else %}''{% endif %};margin-bottom:14px;">
+      <label>Valor Recebido (R$)</label>
+      <input type="text" name="valor" id="valor-input" class="form-control"
+             value="{{ pagamento.valor|floatformat:2 }}" autocomplete="off" />
+    </div>
+
+    <!-- DATA -->
+    <div class="form-group" style="margin-bottom:14px;">
+      <label>Data do Pagamento</label>
+      <input type="date" name="data_pagamento" class="form-control"
+             value="{{ pagamento.data_pagamento|date:'Y-m-d' }}" required />
+    </div>
+
+    <!-- DESCONTO -->
+    <div class="form-group" id="desconto-group" style="display:{% if pagamento.forma == 'gratuito' %}none{% else %}''{% endif %};margin-bottom:14px;">
+      <label>Desconto (R$)</label>
+      <input type="text" name="desconto" class="form-control"
+             value="{{ pagamento.desconto|floatformat:2 }}" autocomplete="off" />
+    </div>
+
+    <!-- OBSERVAÇÃO -->
+    <div class="form-group" id="observacao-group" style="display:{% if pagamento.forma == 'gratuito' %}none{% else %}''{% endif %};margin-bottom:14px;">
+      <label>Observação</label>
+      <input type="text" name="observacoes" class="form-control" value="{{ pagamento.observacoes }}" />
+    </div>
+
+    <!-- COMPROVANTE -->
+    <div class="form-group" style="margin-bottom:16px;">
+      <label>Comprovante (PDF / imagem)</label>
+      {% if pagamento.comprovante %}
+      <div style="margin-bottom:8px;">
+        <a href="{{ pagamento.comprovante.url }}" target="_blank" class="btn btn-outline btn-sm">📎 Ver comprovante atual</a>
+      </div>
+      {% endif %}
+      <input type="file" name="comprovante" accept=".pdf,.jpg,.jpeg,.png" class="form-control" style="padding:6px;" />
+      <small style="color:var(--cinza-3);">Deixe em branco para manter o atual</small>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <button type="submit" class="btn btn-verde" style="flex:1;justify-content:center;">💾 Salvar</button>
+      <a href="{% url 'pagamentos:checkout' reserva.pk %}" class="btn btn-outline" style="flex:1;justify-content:center;">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selPag(btn) {
+  document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+  btn.classList.add('selected');
+  const forma    = btn.dataset.value;
+  const isCartao = forma === 'cartao_credito';
+  const isPix    = forma === 'pix';
+  const isGratis = forma === 'gratuito';
+
+  document.getElementById('forma-input').value = forma;
+  document.getElementById('parcelas-group').style.display  = isCartao ? 'flex'  : 'none';
+  document.getElementById('banco-pix-group').style.display = isPix    ? 'flex'  : 'none';
+  document.getElementById('gratuito-aviso').style.display  = isGratis ? 'block' : 'none';
+
+  const show = isGratis ? 'none' : '';
+  document.getElementById('valor-group').style.display      = show;
+  document.getElementById('desconto-group').style.display   = show;
+  document.getElementById('observacao-group').style.display = show;
+}
+</script>
+{% endblock %}

@@ -19,7 +19,7 @@ def lista(request):
 
 @login_required
 def cadastrar(request):
-    form = ClienteForm(request.POST or None)
+    form = ClienteForm(request.POST or None, request.FILES if request.method == 'POST' else None)
     if form.is_valid():
         cliente = form.save()
         audit_log(request, AuditLog.ACAO_CRIAR, 'Clientes', f'Cadastrou cliente: {cliente.nome}')
@@ -31,7 +31,7 @@ def cadastrar(request):
 @login_required
 def editar(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
-    form = ClienteForm(request.POST or None, instance=cliente)
+    form = ClienteForm(request.POST or None, request.FILES if request.method == 'POST' else None, instance=cliente)
     if form.is_valid():
         form.save()
         audit_log(request, AuditLog.ACAO_EDITAR, 'Clientes', f'Editou cliente: {cliente.nome}')

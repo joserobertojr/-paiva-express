@@ -66,7 +66,7 @@
         <div class="form-header-icon">➕</div>
         <div><div class="form-title">Registrar Pagamento</div></div>
       </div>
-      <form method="post" novalidate>
+      <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
 
         <!-- FORMA -->
@@ -82,9 +82,8 @@
             <div class="payment-method" data-value="cartao_credito" onclick="selPag(this)">
               <div class="pm-icon">💳</div><div class="pm-label">Cartão de Crédito</div>
             </div>
-            <div class="payment-method" data-value="gratuito" onclick="selPag(this)"
-                 style="border-color:#9C27B0;">
-              <div class="pm-icon">🎁</div><div class="pm-label">Gratuito</div>
+            <div class="payment-method" data-value="gratuito" onclick="selPag(this)">
+              <div class="pm-icon">🎁</div><div class="pm-label">Free</div>
             </div>
           </div>
           <input type="hidden" name="forma" id="forma-input" />
@@ -92,7 +91,7 @@
 
         <!-- AVISO GRATUITO -->
         <div id="gratuito-aviso" style="display:none;margin-bottom:14px;padding:14px 16px;background:#F3E5F5;border-left:4px solid #9C27B0;border-radius:0 8px 8px 0;">
-          <strong style="color:#6A1B9A;">🎁 Passagem Gratuita</strong><br/>
+          <strong style="color:#6A1B9A;">🎁 Passagem Free</strong><br/>
           <span style="font-size:.85rem;color:#7B1FA2;">A reserva será marcada como quitada sem nenhum valor financeiro registrado.</span>
         </div>
 
@@ -144,12 +143,12 @@
         </div>
 
         <!-- VALOR -->
-        <div class="form-group" style="margin-bottom:14px;">
+        <div class="form-group" id="valor-group" style="margin-bottom:14px;">
           <label>Valor Recebido (R$) <span style="color:red">*</span></label>
           <input type="text" name="valor" id="valor-input" class="form-control"
                  placeholder="0,00" oninput="calcSaldo(this.value)" autocomplete="off" />
           <div id="parcelas-preview" style="display:none;margin-top:6px;padding:8px 12px;background:var(--verde-light);border-radius:6px;font-size:.82rem;color:var(--verde-dark);font-weight:600;"></div>
-          <div style="margin-top:8px;padding:10px 14px;background:var(--cinza-bg);border-radius:8px;display:flex;justify-content:space-between;font-size:.88rem;">
+          <div id="saldo-row" style="margin-top:8px;padding:10px 14px;background:var(--cinza-bg);border-radius:8px;display:flex;justify-content:space-between;font-size:.88rem;">
             <span>Saldo após este pagamento:</span>
             <strong id="saldo-preview" style="color:var(--laranja);">R$ {{ saldo|floatformat:2 }}</strong>
           </div>
@@ -162,15 +161,23 @@
         </div>
 
         <!-- DESCONTO -->
-        <div class="form-group" style="margin-bottom:14px;">
+        <div class="form-group" id="desconto-group" style="margin-bottom:14px;">
           <label>Desconto (R$)</label>
           <input type="text" name="desconto" id="desconto-input" class="form-control"
                  placeholder="0,00" value="0,00" oninput="calcSaldo(document.getElementById('valor-input').value)" autocomplete="off" />
         </div>
 
-        <div class="form-group" style="margin-bottom:16px;">
+        <div class="form-group" id="observacao-group" style="margin-bottom:16px;">
           <label>Observação</label>
           <input type="text" name="observacoes" class="form-control" placeholder="Opcional" />
+        </div>
+
+        <!-- COMPROVANTE -->
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Comprovante (PDF)</label>
+          <input type="file" name="comprovante" accept=".pdf,.jpg,.jpeg,.png" class="form-control"
+                 style="padding:6px;" />
+          <small style="color:var(--cinza-3);">PDF, JPG ou PNG · opcional</small>
         </div>
 
         <button type="submit" class="btn btn-laranja" style="width:100%;justify-content:center;padding:12px;">
@@ -189,7 +196,7 @@
       <div class="panel-body">
         <table class="saleetur-table">
           <thead>
-            <tr><th>#</th><th>Forma</th><th>Banco</th><th>Parcelas</th><th>Vendedor</th><th>Desconto</th><th>Valor</th><th>Data</th><th>Recibo</th></tr>
+            <tr><th>#</th><th>Forma</th><th>Banco</th><th>Parcelas</th><th>Vendedor</th><th>Desconto</th><th>Valor</th><th>Data</th><th>Comprovante</th><th>Recibo</th></tr>
           </thead>
           <tbody>
             {% for p in pagamentos %}
@@ -213,10 +220,22 @@
               <td><strong style="color:var(--verde);">R$ {{ p.valor|floatformat:2 }}</strong></td>
               <td style="font-size:.8rem;color:var(--cinza-3);">{{ p.data_pagamento|date:"d/m/Y" }}</td>
               <td>
-                <a href="{% url 'pagamentos:recibo' p.pk %}" target="_blank"
-                   class="btn btn-outline btn-sm" title="Imprimir recibo">
-                  🖨️ Imprimir
+                {% if p.comprovante %}
+                <a href="{{ p.comprovante.url }}" target="_blank"
+                   class="btn btn-outline btn-sm" title="Ver comprovante">
+                  📎 Ver
                 </a>
+                {% else %}
+                <span style="color:var(--cinza-3);font-size:.8rem;">—</span>
+                {% endif %}
+              </td>
+              <td style="white-space:nowrap;">
+                <a href="{% url 'pagamentos:recibo' p.pk %}" target="_blank"
+                   class="btn btn-outline btn-sm" title="Imprimir recibo">🖨️</a>
+                <a href="{% url 'pagamentos:editar' p.pk %}"
+                   class="btn btn-outline btn-sm" title="Editar pagamento">✏️</a>
+                <a href="{% url 'pagamentos:excluir' p.pk %}"
+                   class="btn btn-sm" style="background:#FFF3E0;color:#E65100;border:1px solid #FFCC80;" title="Excluir pagamento">🗑️</a>
               </td>
             </tr>
             {% endfor %}
@@ -276,28 +295,27 @@
 <script>
 const saldoTotal = parseFloat('{{ saldo|floatformat:2 }}'.replace(',', '.'));
 
-function selPag(el) {
+function selPag(btn) {
   document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
-  el.classList.add('selected');
-  const forma = el.dataset.value;
-  document.getElementById('forma-input').value = forma;
-  const isCartao  = forma === 'cartao_credito';
-  const isPix     = forma === 'pix';
-  const isGratis  = forma === 'gratuito';
+  btn.classList.add('selected');
+  const forma    = btn.dataset.value;
+  const isCartao = forma === 'cartao_credito';
+  const isPix    = forma === 'pix';
+  const isGratis = forma === 'gratuito';
 
-  document.getElementById('parcelas-group').style.display   = isCartao ? 'flex' : 'none';
-  document.getElementById('banco-pix-group').style.display  = isPix    ? 'flex' : 'none';
-  document.getElementById('gratuito-aviso').style.display   = isGratis ? 'block': 'none';
+  document.getElementById('forma-input').value = forma;
+
+  // Campos condicionais por forma
+  document.getElementById('parcelas-group').style.display  = isCartao ? 'flex'  : 'none';
+  document.getElementById('banco-pix-group').style.display = isPix    ? 'flex'  : 'none';
+  document.getElementById('gratuito-aviso').style.display  = isGratis ? 'block' : 'none';
   if (!isCartao) document.getElementById('parcelas-preview').style.display = 'none';
 
-  // Esconde campos financeiros quando gratuito
-  const camposFinanceiros = ['valor-input', 'desconto-input'];
-  camposFinanceiros.forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.closest('.form-group').style.display = isGratis ? 'none' : '';
-  });
-  document.getElementById('saldo-preview')?.closest('div[style]')?.style &&
-    (document.getElementById('saldo-preview').closest('[id="saldo-preview"]')?.parentElement?.style.display = isGratis ? 'none' : '');
+  // Esconde valor, desconto e observação quando gratuito
+  const show = isGratis ? 'none' : '';
+  document.getElementById('valor-group').style.display     = show;
+  document.getElementById('desconto-group').style.display  = show;
+  document.getElementById('observacao-group').style.display = show;
 
   calcSaldo(document.getElementById('valor-input').value);
 }

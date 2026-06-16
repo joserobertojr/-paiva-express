@@ -13,4 +13,5 @@ urlpatterns = [
     path('configuracoes/bancos/novo/', views.conf_banco_novo, name='conf_banco_novo'),
     path('configuracoes/bancos/<int:pk>/editar/', views.conf_banco_editar, name='conf_banco_editar'),
     path('configuracoes/bancos/<int:pk>/excluir/', views.conf_banco_excluir, name='conf_banco_excluir'),
+    path('backup/', views.backup, name='backup'),
 ]

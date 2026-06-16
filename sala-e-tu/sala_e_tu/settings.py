@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'pacotes',
     'reservas',
     'pagamentos',
+    'cartoes',
 ]
 
 # LGPD — chave de criptografia para campos sensíveis (gere uma nova para produção)

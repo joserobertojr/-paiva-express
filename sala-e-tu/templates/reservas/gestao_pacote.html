@@ -44,6 +44,8 @@
         <span class="badge badge-{{ reserva.status }}">{{ reserva.get_status_display }}</span>
         {% if reserva.saldo_devedor > 0 %}
           <span class="saldo-badge">⚠️ Falta R$ {{ reserva.saldo_devedor|floatformat:2 }}</span>
+        {% elif reserva.eh_gratuito %}
+          <span style="background:#F3E5F5;color:#6A1B9A;padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:700;">🎁 Free</span>
         {% else %}
           <span class="quitado-badge">✓ Quitado</span>
         {% endif %}
@@ -81,22 +83,12 @@
               {{ forloop.counter }}
               {% if pax.principal %}<span class="principal-tag">P</span>{% endif %}
             </td>
-            <td><strong>{{ pax.cliente.nome }}</strong></td>
+            <td><a href="{% url 'clientes:editar' pax.cliente.pk %}" style="color:var(--verde-dark);font-weight:700;text-decoration:none;">{{ pax.cliente.nome }}</a></td>
             <td>{{ pax.cliente.doc_formatado }}</td>
             <td>{{ pax.cliente.telefone }}</td>
             <td>{{ pax.cliente.cidade|default:"—" }}</td>
             <td>
               <div style="display:flex;justify-content:center;gap:5px;">
-                <button class="btn btn-outline btn-sm btn-ver-pax"
-                  data-nome="{{ pax.cliente.nome }}"
-                  data-doc="{{ pax.cliente.doc_formatado }}"
-                  data-tipo="{{ pax.cliente.get_tipo_documento_display }}"
-                  data-tel="{{ pax.cliente.telefone }}"
-                  data-email="{{ pax.cliente.email|default:'—' }}"
-                  data-cidade="{{ pax.cliente.cidade|default:'—' }}"
-                  data-nasc="{{ pax.cliente.data_nascimento|date:'d/m/Y'|default:'—' }}"
-                  title="Ver dados">👁</button>
-                <a href="{% url 'clientes:editar' pax.cliente.pk %}" class="btn btn-outline btn-sm" title="Editar cliente">✏️</a>
                 {% if passageiros|length > 1 %}
                 <a href="{% url 'reservas:remover_passageiro' pax.pk %}"
                    class="btn btn-danger btn-sm"
@@ -133,27 +125,6 @@
 </div></div>
 {% endif %}
 
-
-<!-- ── MODAL: Visualizar passageiro ── -->
-<div class="modal-overlay" id="modal-pax">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3 id="pax-m-nome"></h3>
-      <button class="modal-close" onclick="document.getElementById('modal-pax').classList.remove('open')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="modal-row"><span class="modal-label">Tipo de Documento</span><span id="pax-m-tipo"></span></div>
-      <div class="modal-row"><span class="modal-label">Documento</span><span id="pax-m-doc"></span></div>
-      <div class="modal-row"><span class="modal-label">Telefone</span><span id="pax-m-tel"></span></div>
-      <div class="modal-row"><span class="modal-label">E-mail</span><span id="pax-m-email"></span></div>
-      <div class="modal-row"><span class="modal-label">Cidade</span><span id="pax-m-cidade"></span></div>
-      <div class="modal-row"><span class="modal-label">Nascimento</span><span id="pax-m-nasc"></span></div>
-    </div>
-    <div style="padding:16px 24px;text-align:right;">
-      <button class="btn btn-outline" onclick="document.getElementById('modal-pax').classList.remove('open')">Fechar</button>
-    </div>
-  </div>
-</div>
 
 <!-- ── MODAL: Adicionar passageiro ── -->
 <div class="modal-overlay" id="modal-add-pax">
@@ -194,21 +165,6 @@ const CLIENTES = {{ clientes_json|safe }};
 // Fechar modais ao clicar fora
 document.querySelectorAll('.modal-overlay').forEach(m => {
   m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
-});
-
-// Visualizar passageiro
-document.querySelectorAll('.btn-ver-pax').forEach(btn => {
-  btn.addEventListener('click', function() {
-    const d = this.dataset;
-    document.getElementById('pax-m-nome').textContent   = d.nome;
-    document.getElementById('pax-m-tipo').textContent   = d.tipo;
-    document.getElementById('pax-m-doc').textContent    = d.doc;
-    document.getElementById('pax-m-tel').textContent    = d.tel;
-    document.getElementById('pax-m-email').textContent  = d.email;
-    document.getElementById('pax-m-cidade').textContent = d.cidade;
-    document.getElementById('pax-m-nasc').textContent   = d.nasc;
-    document.getElementById('modal-pax').classList.add('open');
-  });
 });
 
 // Adicionar passageiro

@@ -109,6 +109,8 @@
                 <span style="background:#E8F5E9;color:#1B5E20;padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:600;">PIX</span>
               {% elif p.forma == 'dinheiro' %}
                 <span style="background:#FFF8E1;color:#F57C00;padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:600;">Dinheiro</span>
+              {% elif p.forma == 'gratuito' %}
+                <span style="background:#F3E5F5;color:#6A1B9A;padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:600;">🎁 Free</span>
               {% else %}
                 <span style="background:#EDE7F6;color:#4527A0;padding:3px 10px;border-radius:12px;font-size:.8rem;font-weight:600;">
                   Cartão{% if p.parcelas and p.parcelas > 1 %} {{ p.parcelas }}x{% endif %}

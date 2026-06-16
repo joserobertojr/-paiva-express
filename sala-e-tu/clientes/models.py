@@ -10,6 +10,7 @@ class Cliente(models.Model):
     data_nascimento = models.DateField('Data de Nascimento', null=True, blank=True)
     email = models.EmailField('E-mail', blank=True)
     cidade = models.CharField('Cidade', max_length=80, blank=True)
+    foto = models.ImageField('Foto', upload_to='clientes/fotos/', null=True, blank=True)
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 

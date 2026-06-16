@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block page_title %}Cartões Aprovados{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>{{ titulo }}</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a> <span class="breadcrumb-sep">/</span>
+      <a href="{% url 'cartoes:lista' %}">Cartões Aprovados</a> <span class="breadcrumb-sep">/</span> {{ titulo }}
+    </div>
+  </div>
+</div>
+
+<div class="form-card">
+  <div class="form-header">
+    <div class="form-header-icon">💳</div>
+    <div>
+      <div class="form-title">{{ titulo }}</div>
+      <div class="form-subtitle">Preencha os dados do cartão aprovado</div>
+    </div>
+  </div>
+
+  {% if form.non_field_errors %}
+  <div style="background:#FFEBEE;border-left:4px solid #C62828;padding:12px 16px;margin:0 20px;border-radius:0 6px 6px 0;font-size:.88rem;color:#B71C1C;">
+    {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+  </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    <div class="form-grid">
+
+      <div class="form-group">
+        <label>Data <span style="color:var(--laranja);">*</span></label>
+        {% render_field form.data class="form-control" %}
+        {{ form.data.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>Bandeira <span style="color:var(--laranja);">*</span></label>
+        {% render_field form.bandeira class="form-control" %}
+        {{ form.bandeira.errors }}
+      </div>
+
+      <div class="form-group full">
+        <label>Titular <span style="color:var(--laranja);">*</span></label>
+        {% render_field form.titular class="form-control" placeholder="Nome impresso no cartão" %}
+        {{ form.titular.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>Número do Cartão <span style="color:var(--laranja);">*</span></label>
+        {% render_field form.numero class="form-control" placeholder="0000 0000 0000 0000" id="id_numero" maxlength="19" %}
+        {{ form.numero.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>Validade <span style="color:var(--laranja);">*</span></label>
+        {% render_field form.validade class="form-control" placeholder="MM/AAAA" id="id_validade" maxlength="7" %}
+        {{ form.validade.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>Valor (R$) <span style="color:var(--laranja);">*</span></label>
+        {% render_field form.valor class="form-control" placeholder="0,00" %}
+        {{ form.valor.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>CID <span style="color:var(--laranja);">*</span></label>
+        {% render_field form.cid class="form-control" placeholder="000" maxlength="4" %}
+        {{ form.cid.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>Parcelas <span style="color:var(--laranja);">*</span></label>
+        {% render_field form.parcelas class="form-control" %}
+        {{ form.parcelas.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>Origem <span style="color:var(--laranja);">*</span></label>
+        {% render_field form.origem class="form-control" placeholder="Ex: João Pessoa" %}
+        {{ form.origem.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>Destino <span style="color:var(--laranja);">*</span></label>
+        {% render_field form.destino class="form-control" placeholder="Ex: Cancún" %}
+        {{ form.destino.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>Status <span style="color:var(--laranja);">*</span></label>
+        {% render_field form.status class="form-control" %}
+        {{ form.status.errors }}
+      </div>
+
+      <div class="form-group">
+        <label>Comprovante (PDF)</label>
+        {% if cartao.comprovante %}
+          <div style="margin-bottom:8px;">
+            <a href="{{ cartao.comprovante.url }}" target="_blank" class="btn btn-outline btn-sm">📄 Ver comprovante atual</a>
+          </div>
+        {% endif %}
+        {% render_field form.comprovante class="form-control" accept=".pdf,.jpg,.jpeg,.png" %}
+        {{ form.comprovante.errors }}
+      </div>
+
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-verde">💾 Salvar</button>
+      <a href="{% url 'cartoes:lista' %}" class="btn btn-outline">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Máscara número do cartão: 0000 0000 0000 0000
+  const numInput = document.getElementById('id_numero');
+  if (numInput) {
+    numInput.addEventListener('input', function() {
+      let v = this.value.replace(/\D/g, '').slice(0, 16);
+      this.value = v.replace(/(.{4})/g, '$1 ').trim();
+    });
+  }
+
+  // Máscara validade: MM/AAAA
+  const valInput = document.getElementById('id_validade');
+  if (valInput) {
+    valInput.addEventListener('input', function() {
+      let v = this.value.replace(/\D/g, '').slice(0, 6);
+      if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+      this.value = v;
+    });
+  }
+</script>
+{% endblock %}

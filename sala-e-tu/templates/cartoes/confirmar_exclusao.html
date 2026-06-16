@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Remover Cartão{% endblock %}
+{% block page_title %}Cartões Aprovados{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Remover Registro</h1>
+    <div class="breadcrumb">
+      <a href="{% url 'core:dashboard' %}">Dashboard</a> <span class="breadcrumb-sep">/</span>
+      <a href="{% url 'cartoes:lista' %}">Cartões Aprovados</a> <span class="breadcrumb-sep">/</span> Remover
+    </div>
+  </div>
+</div>
+<div class="panel" style="max-width:500px;">
+  <div class="panel-body" style="padding:24px;">
+    <p style="font-size:1rem;margin-bottom:16px;">
+      Confirmar remoção do registro de <strong>{{ cartao.titular }}</strong>
+      ({{ cartao.get_bandeira_display }} — R$ {{ cartao.valor|floatformat:2 }})?
+    </p>
+    <form method="post" style="display:flex;gap:10px;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">🗑️ Sim, remover</button>
+      <a href="{% url 'cartoes:lista' %}" class="btn btn-outline">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}
