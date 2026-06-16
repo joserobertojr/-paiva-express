@@ -6,41 +6,131 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login — SaleTur</title>
   <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #f0f4f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .login-card {
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.10);
+      width: 100%;
+      max-width: 400px;
+      padding: 48px 40px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .login-logo {
+      width: 200px;
+      margin-bottom: 32px;
+    }
+
+    .login-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2d6a4f;
+      margin-bottom: 6px;
+      letter-spacing: .01em;
+    }
+
+    .login-sub {
+      font-size: .85rem;
+      color: #888;
+      margin-bottom: 32px;
+    }
+
+    .login-error {
+      width: 100%;
+      background: #fff0f0;
+      border-left: 4px solid #c62828;
+      color: #c62828;
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      font-size: .86rem;
+      margin-bottom: 20px;
+    }
+
+    .login-form { width: 100%; }
+
+    .login-form label {
+      display: block;
+      font-size: .82rem;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 6px;
+    }
+
+    .login-form input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: .95rem;
+      color: #222;
+      outline: none;
+      transition: border-color .2s;
+      margin-bottom: 18px;
+    }
+
+    .login-form input:focus { border-color: #2e7d32; }
+
+    .btn-entrar {
+      width: 100%;
+      padding: 13px;
+      background: #2e7d32;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: .02em;
+      transition: background .2s;
+      margin-top: 4px;
+    }
+
+    .btn-entrar:hover { background: #1b5e20; }
+
+    .login-footer {
+      margin-top: 28px;
+      font-size: .78rem;
+      color: #bbb;
+    }
+  </style>
 </head>
 <body>
-<div class="login-page">
-  <div class="login-left">
-    <div class="login-logo-wrap">✈️</div>
-    <div class="login-title">SaleTur</div>
-    <div class="login-sub">Sistema de Gestão de Viagens</div>
-    <div style="margin-top:40px;opacity:.7;font-size:.9rem;text-align:center;max-width:300px;line-height:1.8;">
-      Gerencie clientes, excursões, reservas e pagamentos<br/>em um só lugar.
-    </div>
+  <div class="login-card">
+
+    <img src="{% static 'img/IMG_5629.PNG' %}" alt="SaleTur" class="login-logo" />
+
+    <div class="login-title">Acesse o sistema</div>
+    <div class="login-sub">Entre com suas credenciais para continuar</div>
+
+    {% if form.errors %}
+    <div class="login-error">❌ Usuário ou senha incorretos.</div>
+    {% endif %}
+
+    <form method="post" class="login-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}" />
+      <label>Usuário</label>
+      <input type="text" name="username" placeholder="seu.usuario" autofocus required />
+      <label>Senha</label>
+      <input type="password" name="password" placeholder="••••••••" required />
+      <button type="submit" class="btn-entrar">Entrar</button>
+    </form>
+
+    <div class="login-footer">SaleTur Turismo © 2026</div>
   </div>
-  <div class="login-right">
-    <div class="login-form-wrap">
-      <div class="login-form-title">Acesse o sistema</div>
-      <div class="login-form-sub">Entre com suas credenciais para continuar</div>
-      {% if form.errors %}
-        <div class="alert alert-error" style="margin-bottom:16px;">
-          ❌ Usuário ou senha incorretos.
-        </div>
-      {% endif %}
-      <form method="post">
-        {% csrf_token %}
-        <div class="form-group">
-          <label>Usuário</label>
-          <input type="text" name="username" placeholder="seu.usuario" autofocus required />
-        </div>
-        <div class="form-group">
-          <label>Senha</label>
-          <input type="password" name="password" placeholder="••••••••" required />
-        </div>
-        <input type="hidden" name="next" value="{{ next }}" />
-        <button type="submit" class="btn-login">Entrar →</button>
-      </form>
-    </div>
-  </div>
-</div>
 </body>
 </html>
