@@ -69,7 +69,7 @@ img { max-width: 100%; }
 .sidebar-logo .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
 }
 .sidebar-logo .brand-icon {
   width: 40px; height: 40px;
