@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load saleetur_extras %}
 {% block title %}Excursões{% endblock %}
 {% block page_title %}Excursões{% endblock %}
 {% block content %}
@@ -38,7 +39,7 @@
             <th>Retorno</th>
             <th>Dias</th>
             <th>Valor</th>
-            <th>Vagas</th>
+            <th style="text-align:center;">Vagas Disponíveis</th>
             {% if eh_admin %}<th></th>{% endif %}
           </tr>
         </thead>
@@ -50,7 +51,7 @@
             <td>{{ p.data_saida|date:"d/m/Y" }}</td>
             <td>{{ p.data_retorno|date:"d/m/Y" }}</td>
             <td style="text-align:center;">{{ p.duracao_dias }}d</td>
-            <td>R$ {{ p.valor|floatformat:2 }}</td>
+            <td>R$ {{ p.valor|brl }}</td>
             <td style="text-align:center;">
               {% if p.lotado %}
                 <span style="background:#FFEBEE;color:#C62828;padding:2px 8px;border-radius:12px;font-size:.78rem;font-weight:600;">Lotado</span>
